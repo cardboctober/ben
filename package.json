@@ -19,6 +19,12 @@
   "dependencies": {
     "buble": "^0.14.0",
     "rollup": "^0.36.1",
-    "three": "^0.81.2"
+    "rollup-plugin-buble": "^0.14.0",
+    "rollup-watch": "^2.5.0",
+    "three": "^0.81.2",
+    "uglify-js": "^2.7.3"
+  },
+  "devDependencies": {
+    "rollup-plugin-node-resolve": "^2.0.0"
   }
 }
