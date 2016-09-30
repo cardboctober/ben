@@ -8,7 +8,6 @@ const renderer = new Renderer()
 renderer.render(cube)
 
 loop( t => {
-  // cube.rotation( t / 5000 )
   if(renderer.dirty)
     renderer.render(cube)
 })
