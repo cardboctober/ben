@@ -80,7 +80,7 @@
     this.ctx.lineCap = 'round'
     this.ctx.strokeStyle = '#fff'
 
-    var s = Math.min(this.w, this.h) / 4
+    var s = Math.min(this.w, this.h) / 9
 
     this.left = translate(
       this.w/4,
@@ -164,7 +164,6 @@
   renderer.render(cube)
 
   loop( function (t) {
-    // cube.rotation( t / 5000 )
     if(renderer.dirty)
       { renderer.render(cube) }
   })
