@@ -32,7 +32,7 @@ export default class Renderer {
     this.canvas.height = this.h = window.innerHeight
 
     this.ctx = this.canvas.getContext('2d')
-    this.ctx.lineWidth = 4
+    this.ctx.lineWidth = 1
     this.ctx.lineCap = 'round'
     this.ctx.strokeStyle = '#fff'
 
