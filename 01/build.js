@@ -89,7 +89,7 @@
     )
     .multiply(scale(s))
     .multiply(perspective(0.1))
-    .multiply(rotateY(0.05))
+    .multiply(rotateY(-0.05))
 
     this.right = translate(
       this.w*.75,
@@ -98,7 +98,7 @@
     )
     .multiply(scale(s))
     .multiply(perspective(0.1))
-    .multiply(rotateY(-0.05))
+    .multiply(rotateY(0.05))
 
 
     this.dirty = true
