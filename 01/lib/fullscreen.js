@@ -113,7 +113,10 @@ export default function fullscreen(){
   if(available) {
 
     const button = document.createElement('button')
+    
     button.innerText = '↗︎'
+    button.setAttribute('style', 'position: absolute; bottom:0; left:0; font-size: 10vmin; height: 2em; width: 2em; border: none; background: rgba(255,255,255,0.15); color: #fff; border-radius: 0 10% 0 0; box-shadow: rgba(1,1,1,0.1) 0 0 8px; font-weight: 800;')
+
     document.body.appendChild(button)
 
     document.addEventListener('fullscreenchange', e => {
