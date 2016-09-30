@@ -63,9 +63,21 @@ export default class Renderer {
 
   orient(e) {
 
+    // There is definitely a better way of doing this, but this'll do for now
+
+    var up = ((e.gamma + 180) % 180) - 90
+
+    var off = 0
+    if(e.gamma > 0) {
+      off = Math.PI
+    }
+
     this.orientation =
-      rotateY(
-        ((-e.alpha/360) + 1) * Math.PI*2
+      rotateX(up/50)
+      .multiply(
+        rotateY(
+          (((-e.alpha/360) + 1) * Math.PI*2) + off
+        )
       )
 
     this.dirty = true
