@@ -300,16 +300,13 @@
 
   }
 
-  var cube = new Cube(1)
+  var cube = new Cube()
   var renderer = new Renderer()
-
-  renderer.render(cube)
 
   loop( function (t) {
     if(renderer.dirty)
       { renderer.render(cube) }
   })
-
 
   fullscreen()
 
