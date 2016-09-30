@@ -40,7 +40,6 @@
   var scale = function (s) { return Matrix.Diagonal([s,s,s,1]); }
 
 
-  var rotateX = function (a) { return toHom(Matrix.RotationX(a)); }
   var rotateY = function (a) { return toHom(Matrix.RotationY(a)); }
 
   var perspective = function (p) { return $M([

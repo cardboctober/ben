@@ -67,9 +67,6 @@ export default class Renderer {
       rotateY(
         ((-e.alpha/360) + 1) * Math.PI*2
       )
-      .multiply(
-        rotateX(0.1)
-      )
 
     this.dirty = true
 
