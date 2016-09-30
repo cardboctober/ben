@@ -78,7 +78,7 @@
     this.ctx = this.canvas.getContext('2d')
     this.ctx.lineWidth = 4
     this.ctx.lineCap = 'round'
-    // this.ctx.strokeStyle = '#fff'
+    this.ctx.strokeStyle = '#fff'
 
     var s = Math.min(this.w, this.h) / 4
 
