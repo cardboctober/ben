@@ -22,10 +22,7 @@ export default class Renderer {
     window.addEventListener('deviceorientation',
       e => this.orient(e), false)
 
-    this.ctx = this.canvas.getContext('2d')
-    // this.ctx.lineWidth = 4
-    // this.ctx.lineCap = 'round'
-    // this.ctx.strokeStyle = '#fff'
+
 
 
   }
@@ -34,17 +31,30 @@ export default class Renderer {
     this.canvas.width = this.w = window.innerWidth
     this.canvas.height = this.h = window.innerHeight
 
+    this.ctx = this.canvas.getContext('2d')
+    this.ctx.lineWidth = 4
+    this.ctx.lineCap = 'round'
+    // this.ctx.strokeStyle = '#fff'
+
     var s = Math.min(this.w, this.h) / 4
 
-    // todo - dual cameras
-
-    this.camera = translate(
-      this.w/2,
+    this.left = translate(
+      this.w/4,
       this.h/2,
       0
     )
     .multiply(scale(s))
     .multiply(perspective(0.1))
+    .multiply(rotateY(0.05))
+
+    this.right = translate(
+      this.w*.75,
+      this.h/2,
+      0
+    )
+    .multiply(scale(s))
+    .multiply(perspective(0.1))
+    .multiply(rotateY(-0.05))
 
 
     this.dirty = true
@@ -69,21 +79,24 @@ export default class Renderer {
     var ctx = this.ctx
     ctx.clearRect(0,0,this.w, this.h)
 
-    console.log(this.camera.inspect())
-    const t =
-      this.camera
-      .multiply(this.orientation)
+    ;[this.left, this.right].forEach(camera => {
+      const t =
+        camera
+        .multiply(this.orientation)
 
-    ctx.beginPath()
-    for (var i = 0; i < obj.data.length; i++) {
-      var l = obj.data[i]
-      var a = t.x(l[0])
-      var b = t.x(l[1])
+      ctx.beginPath()
+      for (var i = 0; i < obj.data.length; i++) {
+        var l = obj.data[i]
+        var a = t.x(l[0])
+        var b = t.x(l[1])
 
-      ctx.moveTo(a.e(1)/a.e(4), a.e(2)/a.e(4))
-      ctx.lineTo(b.e(1)/b.e(4), b.e(2)/b.e(4))
-    }
-    ctx.stroke()
+        ctx.moveTo(a.e(1)/a.e(4), a.e(2)/a.e(4))
+        ctx.lineTo(b.e(1)/b.e(4), b.e(2)/b.e(4))
+      }
+      ctx.stroke()
+
+    })
+
 
     // stash incase we have to re-render on size or orientation change
     this.rendered = obj
