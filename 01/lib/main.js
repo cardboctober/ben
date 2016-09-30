@@ -11,3 +11,8 @@ loop( t => {
   if(renderer.dirty)
     renderer.render(cube)
 })
+
+
+import fullscreen from './fullscreen.js'
+
+fullscreen()

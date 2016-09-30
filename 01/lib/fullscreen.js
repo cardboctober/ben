@@ -1,4 +1,6 @@
-var fullscreen = (function ( doc ) {
+// polyfill browser versions
+
+const available = (function ( doc ) {
   // Use JavaScript script mode
   "use strict";
 
@@ -104,3 +106,25 @@ var fullscreen = (function ( doc ) {
   return api;
 
 }( document ));
+
+
+export default function fullscreen(){
+
+  if(available) {
+
+    const button = document.createElement('button')
+    button.innerText = '↗︎'
+    document.body.appendChild(button)
+
+    document.addEventListener('fullscreenchange', e => {
+
+      button.style.display = document.fullscreenEnabled ? 'none' : 'block'
+    })
+
+    button.addEventListener('click', e => {
+      document.body.requestFullscreen()
+    }, false)
+
+  }
+
+}
