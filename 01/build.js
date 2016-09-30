@@ -21,7 +21,7 @@
 
   // wrappers around sylvester with homogenous coord stuff
 
-  // hacky v3 -> v4
+  // hacky m3 -> m4
   var toHom = function (m) { return $M(
       m.elements
         .map(function (r) { return r.concat([0]); })
@@ -29,7 +29,6 @@
     ); }
 
 
-  //
   var translate = function (x,y,z) { return $M([
       [1,0,0,x],
       [0,1,0,y],
@@ -39,8 +38,8 @@
 
   var scale = function (s) { return Matrix.Diagonal([s,s,s,1]); }
 
-
   var rotateX = function (a) { return toHom(Matrix.RotationX(a)); }
+
   var rotateY = function (a) { return toHom(Matrix.RotationY(a)); }
 
   var perspective = function (p) { return $M([

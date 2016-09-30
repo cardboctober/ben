@@ -1,7 +1,7 @@
 
 // wrappers around sylvester with homogenous coord stuff
 
-// hacky v3 -> v4
+// hacky m3 -> m4
 const toHom = (m) =>
   $M(
     m.elements
@@ -10,7 +10,6 @@ const toHom = (m) =>
   )
 
 
-//
 export const translate = (x,y,z) =>
   $M([
     [1,0,0,x],
@@ -22,9 +21,9 @@ export const translate = (x,y,z) =>
 export const scale = (s) =>
   Matrix.Diagonal([s,s,s,1])
 
-
 export const rotateX = a =>
   toHom(Matrix.RotationX(a))
+
 export const rotateY = a =>
   toHom(Matrix.RotationY(a))
 
