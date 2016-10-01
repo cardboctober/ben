@@ -28,8 +28,16 @@ export default class Renderer {
   }
 
   fit() {
-    this.canvas.width = this.w = window.innerWidth
-    this.canvas.height = this.h = window.innerHeight
+
+    var ratio = window.devicePixelRatio || 1
+
+    this.canvas.width = this.w = window.innerWidth * ratio
+    this.canvas.height = this.h = window.innerHeight * ratio
+
+    if(ratio != 1) {
+      this.canvas.style.width = window.innerWidth + 'px'
+      this.canvas.style.height = window.innerHeight + 'px'
+    }
 
     this.ctx = this.canvas.getContext('2d')
     this.ctx.lineWidth = 1
