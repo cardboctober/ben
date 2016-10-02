@@ -4,38 +4,39 @@ const each = (start, to, by, fn) => {
   }
 }
 
-export default class Grid {
+export default function grid (off) {
 
-  constructor (size) {
+  const data = []
 
-    const data = this.data = []
+  const a = -1.5
+  const b = 1.5
+  const ab = b - a
 
-    each(-1,1,1, x => {
-      each(-1,1,1, y => {
-        each(-1,1,1, z => {
-          //  * 0.1
-          // 0.0001
-          const d = 0.05
+  const s = 1.5
+
+  each(-s, s, 1, x => {
+    x = (((x + off + s)) % s*2) - s
+
+    each(-1,1,1, y => {
+      each(-1,1,1, z => {
+
+        const d = 0.05
+          * Math.cos(
+            (x / s)
+            * (Math.PI/2)
+          )
+
+        data.push([
+          $V([x-d,y,z,1]),
+          $V([x+d,y,z,1])
+        ])
 
 
-          this.data.push([
-            $V([x-d,y,z,1]),
-            $V([x+d,y,z,1])
-          ])
-          //
-          // this.data.push([
-          //   $V([x,y-d,z,1]),
-          //   $V([x,y+d,z,1])
-          // ])
-          //
-          // this.data.push([
-          //   $V([x,y,z-d,1]),
-          //   $V([x,y,z+d,1])
-          // ])
-
-        })
       })
     })
+  })
 
-  }
+
+  return {data:data}
+
 }

@@ -42,7 +42,7 @@ export default class Renderer {
     this.ctx = this.canvas.getContext('2d')
     this.ctx.lineWidth = 3
     this.ctx.lineCap = 'round'
-    this.ctx.strokeStyle = '#000'
+    this.ctx.strokeStyle = '#f08'
 
     var s = Math.min(this.w, this.h) / 9
 
@@ -114,19 +114,31 @@ export default class Renderer {
         var y = a.e(2)
         var r = a.distanceFrom(b)
 
+
+        // crosshatch in view coords
+
         ctx.moveTo(
-          x + r,
-          y
+          x,y-r
         )
 
-        ctx.ellipse(
-            x,
-            y,
-            r, r,
-            0, 0, Math.PI*2
+        ctx.lineTo(
+          x,y + r
         )
+
+        ctx.moveTo(
+          x-r,y
+        )
+
+        ctx.lineTo(
+          x+r,y
+        )
+
+        ctx.moveTo(
+          x,y
+        )
+
       }
-      ctx.fill()
+      ctx.stroke()
 
     })
 

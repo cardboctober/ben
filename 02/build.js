@@ -67,7 +67,7 @@
     this.ctx = this.canvas.getContext('2d')
     this.ctx.lineWidth = 3
     this.ctx.lineCap = 'round'
-    this.ctx.strokeStyle = '#000'
+    this.ctx.strokeStyle = '#f08'
 
     var s = Math.min(this.w, this.h) / 9
 
@@ -141,19 +141,31 @@
         var y = a.e(2)
         var r = a.distanceFrom(b)
 
+
+        // crosshatch in view coords
+
         ctx.moveTo(
-          x + r,
-          y
+          x,y-r
         )
 
-        ctx.ellipse(
-            x,
-            y,
-            r, r,
-            0, 0, Math.PI*2
+        ctx.lineTo(
+          x,y + r
         )
+
+        ctx.moveTo(
+          x-r,y
+        )
+
+        ctx.lineTo(
+          x+r,y
+        )
+
+        ctx.moveTo(
+          x,y
+        )
+
       }
-      ctx.fill()
+      ctx.stroke()
 
     })
 
@@ -166,40 +178,42 @@
     }
   }
 
-  var Grid = function Grid (size) {
-    var this$1 = this;
+  function grid (off) {
 
+    var data = []
 
-    var data = this.data = []
+    var a = -1.5
+    var b = 1.5
+    var ab = b - a
 
-    each(-1,1,1, function (x) {
+    var s = 1.5
+
+    each(-s, s, 1, function (x) {
+      x = (((x + off + s)) % s*2) - s
+
       each(-1,1,1, function (y) {
         each(-1,1,1, function (z) {
-          //* 0.1
-          // 0.0001
+
           var d = 0.05
+            * Math.cos(
+              (x / s)
+              * (Math.PI/2)
+            )
 
-
-          this$1.data.push([
+          data.push([
             $V([x-d,y,z,1]),
             $V([x+d,y,z,1])
           ])
-          //
-          // this.data.push([
-          // $V([x,y-d,z,1]),
-          // $V([x,y+d,z,1])
-          // ])
-          //
-          // this.data.push([
-          // $V([x,y,z-d,1]),
-          // $V([x,y,z+d,1])
-          // ])
+
 
         })
       })
     })
 
-  };
+
+    return {data:data}
+
+  }
 
   var loop = function (fn) {
     var wrap = function (t) {
@@ -332,21 +346,11 @@
 
   var renderer = new Renderer()
 
-  // const r = (s) => Math.random() - 2
-  //
-  // const dust = new Particles(10)
-
-  var g = new Grid()
-
-  // renderer.render(dust)
-
   loop( function (t) {
-    // render(g(t))
-
-    if(renderer.dirty)
-      { renderer.render(g) }
+    renderer.render(
+      grid(t/3000)
+    )
   })
-
 
   fullscreen()
 
