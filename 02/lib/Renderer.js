@@ -40,9 +40,9 @@ export default class Renderer {
     }
 
     this.ctx = this.canvas.getContext('2d')
-    this.ctx.lineWidth = 1
+    this.ctx.lineWidth = 3
     this.ctx.lineCap = 'round'
-    this.ctx.strokeStyle = '#fff'
+    this.ctx.strokeStyle = '#000'
 
     var s = Math.min(this.w, this.h) / 9
 
@@ -107,16 +107,29 @@ export default class Renderer {
         var a = t.x(l[0])
         var b = t.x(l[1])
 
-        ctx.moveTo(a.e(1)/a.e(4), a.e(2)/a.e(4))
-        ctx.lineTo(b.e(1)/b.e(4), b.e(2)/b.e(4))
+        a = a.multiply(1/a.e(4))
+        b = b.multiply(1/b.e(4))
+
+        var x = a.e(1)
+        var y = a.e(2)
+        var r = a.distanceFrom(b)
+
+        ctx.moveTo(
+          x + r,
+          y
+        )
+
+        ctx.ellipse(
+            x,
+            y,
+            r, r,
+            0, 0, Math.PI*2
+        )
       }
-      ctx.stroke()
+      ctx.fill()
 
     })
 
-
-    // stash incase we have to re-render on size or orientation change
-    this.rendered = obj
     this.dirty = false
   }
 

@@ -1,26 +1,24 @@
 
+import Particles from './Particles.js'
 import Renderer from './Renderer.js'
+import grid from './grid.js'
 import {loop, rnd} from './util.js'
 
 const renderer = new Renderer()
 
-const r = (s) => Math.random() - 2
+// const r = (s) => Math.random() - 2
+//
+// const dust = new Particles(10)
 
-const obj = {
-  data: Array.from({length:40}, _ =>
-    [
-      $V([0,0,0,1]),
-      $V([rnd(3),rnd(3),rnd(3),1])
-    ])
-}
+const g = new grid()
 
-
-
-renderer.render(obj)
+// renderer.render(dust)
 
 loop( t => {
+  // render(g(t))
+
   if(renderer.dirty)
-    renderer.render(obj)
+    renderer.render(g)
 })
 
 

@@ -65,9 +65,9 @@
     }
 
     this.ctx = this.canvas.getContext('2d')
-    this.ctx.lineWidth = 1
+    this.ctx.lineWidth = 3
     this.ctx.lineCap = 'round'
-    this.ctx.strokeStyle = '#fff'
+    this.ctx.strokeStyle = '#000'
 
     var s = Math.min(this.w, this.h) / 9
 
@@ -134,17 +134,71 @@
         var a = t.x(l[0])
         var b = t.x(l[1])
 
-        ctx.moveTo(a.e(1)/a.e(4), a.e(2)/a.e(4))
-        ctx.lineTo(b.e(1)/b.e(4), b.e(2)/b.e(4))
+        a = a.multiply(1/a.e(4))
+        b = b.multiply(1/b.e(4))
+
+        var x = a.e(1)
+        var y = a.e(2)
+        var r = a.distanceFrom(b)
+
+        ctx.moveTo(
+          x + r,
+          y
+        )
+
+        ctx.ellipse(
+            x,
+            y,
+            r, r,
+            0, 0, Math.PI*2
+        )
       }
-      ctx.stroke()
+      ctx.fill()
 
     })
 
-
-    // stash incase we have to re-render on size or orientation change
-    this.rendered = obj
     this.dirty = false
+  };
+
+  var each = function (start, to, by, fn) {
+    for(var i = start; i <= to; i += by) {
+      fn(i)
+    }
+  }
+
+  var Grid = function Grid (size) {
+    var this$1 = this;
+
+
+    var data = this.data = []
+
+    each(-1,1,1, function (x) {
+      each(-1,1,1, function (y) {
+        each(-1,1,1, function (z) {
+          //* 0.1
+          // 0.0001
+          var d = 0.05
+
+
+          this$1.data.push([
+            $V([x-d,y,z,1]),
+            $V([x+d,y,z,1])
+          ])
+          //
+          // this.data.push([
+          // $V([x,y-d,z,1]),
+          // $V([x,y+d,z,1])
+          // ])
+          //
+          // this.data.push([
+          // $V([x,y,z-d,1]),
+          // $V([x,y,z+d,1])
+          // ])
+
+        })
+      })
+    })
+
   };
 
   var loop = function (fn) {
@@ -155,9 +209,6 @@
 
     requestAnimationFrame(wrap)
   }
-
-
-  var rnd = function (n) { return (Math.random()-.5) * n * 2; }
 
   // polyfill browser versions
 
@@ -281,20 +332,19 @@
 
   var renderer = new Renderer()
 
-  var obj = {
-    data: Array.from({length:40}, function (_) { return [
-        $V([0,0,0,1]),
-        $V([rnd(3),rnd(3),rnd(3),1])
-      ]; })
-  }
+  // const r = (s) => Math.random() - 2
+  //
+  // const dust = new Particles(10)
 
+  var g = new Grid()
 
-
-  renderer.render(obj)
+  // renderer.render(dust)
 
   loop( function (t) {
+    // render(g(t))
+
     if(renderer.dirty)
-      { renderer.render(obj) }
+      { renderer.render(g) }
   })
 
 
