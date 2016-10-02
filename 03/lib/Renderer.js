@@ -19,12 +19,6 @@ export default class Renderer {
     window.addEventListener('resize',
       e => this.fit(), false)
 
-    window.addEventListener('deviceorientation',
-      e => this.orient(e), false)
-
-
-
-
   }
 
   fit() {
@@ -101,46 +95,46 @@ export default class Renderer {
         camera
         .multiply(this.orientation)
 
-      ctx.beginPath()
-      for (var i = 0; i < obj.data.length; i++) {
-        var l = obj.data[i]
-        var a = t.x(l[0])
-        var b = t.x(l[1])
+      obj.forEach( obj => {
 
-        a = a.multiply(1/a.e(4))
-        b = b.multiply(1/b.e(4))
+        const ot = obj.transform ?
+          camera.multiply(obj.transform) :
+          camera
+        // if(obj.transform) {
+        //
+        // }
 
-        var x = a.e(1)
-        var y = a.e(2)
-        var r = a.distanceFrom(b)
+        ctx.strokeStyle = obj.color || '#000'
+
+        ctx.beginPath()
+        for (var i = 0; i < obj.data.length; i++) {
+          var l = obj.data[i]
+          var a = ot.x(l[0])
+          var b = ot.x(l[1])
+
+          a = a.multiply(1/a.e(4))
+          b = b.multiply(1/b.e(4))
+
+          var x = a.e(1)
+          var y = a.e(2)
+          var r = a.distanceFrom(b)
+
+          ctx.moveTo(
+            a.e(1), a.e(2)
+          )
+          ctx.lineTo(
+            b.e(1), b.e(2)
+          )
+
+        }
+        ctx.stroke()
+
+      })
 
 
-        // crosshatch in view coords
 
-        ctx.moveTo(
-          x,y-r
-        )
+      })
 
-        ctx.lineTo(
-          x,y + r
-        )
-
-        ctx.moveTo(
-          x-r,y
-        )
-
-        ctx.lineTo(
-          x+r,y
-        )
-
-        ctx.moveTo(
-          x,y
-        )
-
-      }
-      ctx.stroke()
-
-    })
 
     this.dirty = false
   }

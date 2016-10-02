@@ -34,3 +34,5 @@ export const perspective = p =>
     [0,0,1,0],
     [0,0,p,1-p]
   ])
+
+export const I = Matrix.I(4)

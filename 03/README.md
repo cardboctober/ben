@@ -1,6 +1,6 @@
-# 2 Moving grid
+# 3 Trace
 
-* better fullscreen, works cooler without any ui
-* tried close together circles - didn't work that well in cardboard
-* tried more data points - you can't take in much information with cardboard
-* probably memory inneficient to generate object each time.
+Multiple object + user interaction
+
+* Max suggested a darker background because the device would be so close to your eyes
+* Things are wrong because Pose calculation is hard

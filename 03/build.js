@@ -31,6 +31,8 @@
       [0,0,p,1-p]
     ]); }
 
+  var I = Matrix.I(4)
+
   var Renderer = function Renderer() {
     var this$1 = this;
 
@@ -43,12 +45,6 @@
     this.fit()
     window.addEventListener('resize',
       function (e) { return this$1.fit(); }, false)
-
-    window.addEventListener('deviceorientation',
-      function (e) { return this$1.orient(e); }, false)
-
-
-
 
   };
 
@@ -128,92 +124,100 @@
         camera
         .multiply(this$1.orientation)
 
-      ctx.beginPath()
-      for (var i = 0; i < obj.data.length; i++) {
-        var l = obj.data[i]
-        var a = t.x(l[0])
-        var b = t.x(l[1])
+      obj.forEach( function (obj) {
 
-        a = a.multiply(1/a.e(4))
-        b = b.multiply(1/b.e(4))
+        var ot = obj.transform ?
+          camera.multiply(obj.transform) :
+          camera
+        // if(obj.transform) {
+        //
+        // }
 
-        var x = a.e(1)
-        var y = a.e(2)
-        var r = a.distanceFrom(b)
+        ctx.strokeStyle = obj.color || '#000'
+
+        ctx.beginPath()
+        for (var i = 0; i < obj.data.length; i++) {
+          var l = obj.data[i]
+          var a = ot.x(l[0])
+          var b = ot.x(l[1])
+
+          a = a.multiply(1/a.e(4))
+          b = b.multiply(1/b.e(4))
+
+          var x = a.e(1)
+          var y = a.e(2)
+          var r = a.distanceFrom(b)
+
+          ctx.moveTo(
+            a.e(1), a.e(2)
+          )
+          ctx.lineTo(
+            b.e(1), b.e(2)
+          )
+
+        }
+        ctx.stroke()
+
+      })
 
 
-        // crosshatch in view coords
 
-        ctx.moveTo(
-          x,y-r
-        )
+      })
 
-        ctx.lineTo(
-          x,y + r
-        )
-
-        ctx.moveTo(
-          x-r,y
-        )
-
-        ctx.lineTo(
-          x+r,y
-        )
-
-        ctx.moveTo(
-          x,y
-        )
-
-      }
-      ctx.stroke()
-
-    })
 
     this.dirty = false
   };
 
-  var each = function (start, to, by, fn) {
-    for(var i = start; i <= to; i += by) {
-      fn(i)
+  var Notify = function Notify() {
+    this._callbacks = {}
+  };
+  Notify.prototype.on = function on (e, fn) {
+    (this._callbacks[e] = this._callbacks[e] || [])
+    .push(fn)
+  };
+  Notify.prototype.fire = function fire (e, data) {
+    (this._callbacks[e] || [])
+    .forEach(function (f) { return f(data); })
+  };
+
+  var Pose = (function (Notify) {
+    function Pose () {
+      Notify.call(this)
+
+      window.addEventListener('deviceorientation',
+        this.handle.bind(this),
+        false
+      )
+
+      this.transform = I
     }
-  }
 
-  function grid (off) {
+    if ( Notify ) Pose.__proto__ = Notify;
+    Pose.prototype = Object.create( Notify && Notify.prototype );
+    Pose.prototype.constructor = Pose;
 
-    var data = []
+    Pose.prototype.handle = function handle (e) {
 
-    var a = -1.5
-    var b = 1.5
-    var ab = b - a
+      var up = ((e.gamma + 180) % 180) - 90
 
-    var s = 1.5
+      var off = 0
+      if(e.gamma > 0) {
+        off = Math.PI
+      }
 
-    each(-s, s, 1, function (x) {
-      x = (((x + off + s)) % s*2) - s
+      this.transform =
+        rotateX(up/50)
+        .multiply(
+          rotateY(
+            (((-e.alpha/360) + 1) * Math.PI*2) + off
+          )
+        )
 
-      each(-1,1,1, function (y) {
-        each(-1,1,1, function (z) {
+      this.fire('change', this.transform)
+    };
 
-          var d = 0.05
-            * Math.cos(
-              (x / s)
-              * (Math.PI/2)
-            )
-
-          data.push([
-            $V([x-d,y,z,1]),
-            $V([x+d,y,z,1])
-          ])
-
-
-        })
-      })
-    })
-
-
-    return {data:data}
-
-  }
+    return Pose;
+  }(Notify));
 
   var loop = function (fn) {
     var wrap = function (t) {
@@ -223,6 +227,68 @@
 
     requestAnimationFrame(wrap)
   }
+
+  var Cross = function Cross (x, y, z, s) {
+    if ( x === void 0 ) x=0;
+    if ( y === void 0 ) y=0;
+    if ( z === void 0 ) z=0;
+    if ( s === void 0 ) s=.25;
+
+
+    this.data = [
+      [
+        $V([x-s,y,z,1]),
+        $V([x+s,y,z,1])
+      ],[
+        $V([x,y-s,z,1]),
+        $V([x,y+s,z,1])
+      ],[
+        $V([x,y,z-s,1]),
+        $V([x,y,z+s,1])
+      ]
+    ]
+
+    this.color = 'rgba(255,255,255,0.4)'
+  };
+
+  var Path = function Path () {
+
+    this.data = []
+    this.color = '#fff'
+
+  };
+
+  Path.prototype.clear = function clear () {
+    this.data = []
+    this.last = this.last2 = null
+  };
+
+  Path.prototype.add = function add (p, p2) {
+      var this$1 = this;
+
+
+    if(this.last &&
+      this.last.distanceFrom(p) < 0.1) {
+      return false
+    }
+
+    this.data.push([
+      p,
+      this.last || p
+    ])
+
+    this.data.push([
+      p2,
+      this.last2 || p2
+    ])
+
+    this.last = p
+    this.last2 = p2
+
+    while(this.data.length > 200)
+      { this$1.data.shift() }
+
+  };
 
   // polyfill browser versions
 
@@ -345,11 +411,35 @@
   }
 
   var renderer = new Renderer()
+  var pose = new Pose()
+  var centre = new Cross()
+  // const guide = new Cube(.5)
+
+  var brush = new Cross(0,0,1.5,0.1)
+  brush.color = '#555'
+  var line = new Path()
+
+  pose.on('change', function (transform) {
+    // guide.transform =
+    centre.transform = transform
+    line.transform = transform.inverse()
+
+    var p = transform.x($V([0,0,1.5,1]))
+    var p2 = transform.x($V([0,0,1.6,1]))
+
+    line.add(p,p2)
+
+  })
+
+  document.addEventListener('click', function (_) { return line.clear(); })
 
   loop( function (t) {
-    renderer.render(
-      grid(t/3000)
-    )
+    renderer.render([
+      // guide,
+      centre,
+      brush,
+      line
+    ])
   })
 
   fullscreen()
