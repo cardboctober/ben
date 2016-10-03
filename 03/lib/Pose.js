@@ -7,15 +7,19 @@ export default class Pose extends Notify{
   constructor () {
     super()
 
-    window.addEventListener('deviceorientation',
-      this.handleOrientation.bind(this),
-      false
-    )
-
     window.addEventListener('mousemove',
       this.handleMouse.bind(this),
       {passive:true}
     )
+
+
+    new FULLTILT.getDeviceOrientation({ 'type': 'game' })
+    .then(controller => {
+      (this.controller = controller)
+        .start(this.handleTilt.bind(this))
+    })
+    .catch(e => console.log("no device orientation events"))
+
 
 
     this.transform = I
@@ -38,23 +42,19 @@ export default class Pose extends Notify{
 
   }
 
-  handleOrientation(e) {
+  handleTilt() {
 
-    var up = ((e.gamma + 180) % 180) - 90
+    const m = this.controller.getScreenAdjustedMatrix().elements
+    console.log(m)
 
-    var off = 0
-    if(e.gamma > 0) {
-      off = Math.PI
-    }
-
-    this.transform =
-      rotateX(up/50)
-      .multiply(
-        rotateY(
-          (((-e.alpha/360) + 1) * Math.PI*2) + off
-        )
-      )
+    this.transform = $M([
+      [m[0],m[1],m[2],0],
+      [m[3],m[4],m[5],0],
+      [m[6],m[7],m[8],0],
+      [0, 0, 0, 1]
+    ]).inverse()
 
     this.fire('change', this.transform)
+
   }
 }
