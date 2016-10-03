@@ -37,7 +37,7 @@
     var this$1 = this;
 
 
-    this.camera = this.orientation = Matrix.I(4)
+    this.camera = Matrix.I(4)
 
     this.canvas = document.createElement('canvas')
     document.body.appendChild(this.canvas)
@@ -90,56 +90,25 @@
 
   };
 
-  Renderer.prototype.orient = function orient (e) {
-
-    // There is definitely a better way of doing this, but this'll do for now
-
-    var up = ((e.gamma + 180) % 180) - 90
-
-    var off = 0
-    if(e.gamma > 0) {
-      off = Math.PI
-    }
-
-    this.orientation =
-      rotateX(up/50)
-      .multiply(
-        rotateY(
-          (((-e.alpha/360) + 1) * Math.PI*2) + off
-        )
-      )
-
-    this.dirty = true
-
-  };
-
   Renderer.prototype.render = function render (obj) {
-      var this$1 = this;
-
     var ctx = this.ctx
     ctx.clearRect(0,0,this.w, this.h)
 
     ;[this.left, this.right].forEach(function (camera) {
-      var t =
-        camera
-        .multiply(this$1.orientation)
 
       obj.forEach( function (obj) {
 
-        var ot = obj.transform ?
+        var t = obj.transform ?
           camera.multiply(obj.transform) :
           camera
-        // if(obj.transform) {
-        //
-        // }
 
         ctx.strokeStyle = obj.color || '#000'
 
         ctx.beginPath()
         for (var i = 0; i < obj.data.length; i++) {
           var l = obj.data[i]
-          var a = ot.x(l[0])
-          var b = ot.x(l[1])
+          var a = t.x(l[0])
+          var b = t.x(l[1])
 
           a = a.multiply(1/a.e(4))
           b = b.multiply(1/b.e(4))
@@ -158,12 +127,9 @@
         }
         ctx.stroke()
 
-      })
-
-
 
       })
-
+    })
 
     this.dirty = false
   };
@@ -185,9 +151,15 @@
       Notify.call(this)
 
       window.addEventListener('deviceorientation',
-        this.handle.bind(this),
+        this.handleOrientation.bind(this),
         false
       )
+
+      window.addEventListener('mousemove',
+        this.handleMouse.bind(this),
+        {passive:true}
+      )
+
 
       this.transform = I
     }
@@ -196,7 +168,24 @@
     Pose.prototype = Object.create( Notify && Notify.prototype );
     Pose.prototype.constructor = Pose;
 
-    Pose.prototype.handle = function handle (e) {
+    Pose.prototype.handleMouse = function handleMouse (e) {
+      if(e.buttons === 0) { return this.start = null }
+
+      this.start = this.start || e
+
+      this.transform =
+        rotateY(
+          (this.start.clientX - e.clientX) / 100
+        )
+        .multiply(rotateX(
+          (this.start.clientY - e.clientY) / 100
+        ))
+
+      this.fire('change', this.transform)
+
+    };
+
+    Pose.prototype.handleOrientation = function handleOrientation (e) {
 
       var up = ((e.gamma + 180) % 180) - 90
 

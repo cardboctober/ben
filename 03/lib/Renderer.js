@@ -10,7 +10,7 @@ export default class Renderer {
 
   constructor() {
 
-    this.camera = this.orientation = Matrix.I(4)
+    this.camera = Matrix.I(4)
 
     this.canvas = document.createElement('canvas')
     document.body.appendChild(this.canvas)
@@ -63,54 +63,25 @@ export default class Renderer {
 
   }
 
-  orient(e) {
-
-    // There is definitely a better way of doing this, but this'll do for now
-
-    var up = ((e.gamma + 180) % 180) - 90
-
-    var off = 0
-    if(e.gamma > 0) {
-      off = Math.PI
-    }
-
-    this.orientation =
-      rotateX(up/50)
-      .multiply(
-        rotateY(
-          (((-e.alpha/360) + 1) * Math.PI*2) + off
-        )
-      )
-
-    this.dirty = true
-
-  }
-
   render(obj) {
     var ctx = this.ctx
     ctx.clearRect(0,0,this.w, this.h)
 
-    ;[this.left, this.right].forEach(camera => {
-      const t =
-        camera
-        .multiply(this.orientation)
+    ;[this.left, this.right].forEach((camera) => {
 
       obj.forEach( obj => {
 
-        const ot = obj.transform ?
+        const t = obj.transform ?
           camera.multiply(obj.transform) :
           camera
-        // if(obj.transform) {
-        //
-        // }
 
         ctx.strokeStyle = obj.color || '#000'
 
         ctx.beginPath()
         for (var i = 0; i < obj.data.length; i++) {
           var l = obj.data[i]
-          var a = ot.x(l[0])
-          var b = ot.x(l[1])
+          var a = t.x(l[0])
+          var b = t.x(l[1])
 
           a = a.multiply(1/a.e(4))
           b = b.multiply(1/b.e(4))
@@ -129,12 +100,9 @@ export default class Renderer {
         }
         ctx.stroke()
 
-      })
-
-
 
       })
-
+    })
 
     this.dirty = false
   }
