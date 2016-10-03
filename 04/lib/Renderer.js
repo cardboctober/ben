@@ -68,10 +68,10 @@ export default class Renderer {
     ctx.clearRect(0,0,this.w, this.h)
 
     ;[this.left, this.right].forEach((camera,x) => {
-      
+
       ctx.save()
       ctx.beginPath()
-      console.log(x)
+      
       if(x == 0) {
         ctx.lineTo(0,0)
         ctx.lineTo(this.w/2,0)

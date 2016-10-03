@@ -97,10 +97,10 @@
     ctx.clearRect(0,0,this.w, this.h)
 
     ;[this.left, this.right].forEach(function (camera,x) {
-        
+
       ctx.save()
       ctx.beginPath()
-      console.log(x)
+        
       if(x == 0) {
         ctx.lineTo(0,0)
         ctx.lineTo(this$1.w/2,0)
@@ -227,6 +227,9 @@
         [m[6],m[7],m[8],0],
         [0, 0, 0, 1]
       ]).inverse()
+      .multiply(
+        rotateX(Math.PI/2)
+      )
 
       this.fire('change', this.transform)
 
@@ -427,6 +430,7 @@
   var pose = new Pose()
   var centre = new Cross()
   var guide = new Cube(1)
+  guide.color = 'rgba(0,0,0,0.2)'
 
   pose.on('change', function (transform) {
     f.transform = guide.transform =
@@ -434,6 +438,7 @@
   })
 
   var f = new Floor()
+
 
 
   loop( function (t) {

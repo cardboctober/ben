@@ -52,6 +52,9 @@ export default class Pose extends Notify{
       [m[6],m[7],m[8],0],
       [0, 0, 0, 1]
     ]).inverse()
+    .multiply(
+      rotateX(Math.PI/2)
+    )
 
     this.fire('change', this.transform)
 

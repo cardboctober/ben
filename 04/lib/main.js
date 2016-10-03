@@ -9,6 +9,7 @@ const renderer = new Renderer()
 const pose = new Pose()
 const centre = new Cross()
 const guide = new Cube(1)
+guide.color = 'rgba(0,0,0,0.2)'
 
 pose.on('change', transform => {
   f.transform = guide.transform =
@@ -18,6 +19,7 @@ pose.on('change', transform => {
 import Floor from './Floor.js'
 
 const f = new Floor()
+
 
 
 loop( t => {
