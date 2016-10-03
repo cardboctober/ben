@@ -174,17 +174,23 @@
 
   var Pose = (function (Notify) {
     function Pose () {
-      Notify.call(this)
+      var this$1 = this;
 
-      window.addEventListener('deviceorientation',
-        this.handleOrientation.bind(this),
-        false
-      )
+      Notify.call(this)
 
       window.addEventListener('mousemove',
         this.handleMouse.bind(this),
         {passive:true}
       )
+
+
+      new FULLTILT.getDeviceOrientation({ 'type': 'game' })
+      .then(function (controller) {
+        (this$1.controller = controller)
+          .start(this$1.handleTilt.bind(this$1))
+      })
+      .catch(function (e) { return console.log("no device orientation events"); })
+
 
 
       this.transform = I
@@ -211,24 +217,19 @@
 
     };
 
-    Pose.prototype.handleOrientation = function handleOrientation (e) {
+    Pose.prototype.handleTilt = function handleTilt () {
 
-      var up = ((e.gamma + 180) % 180) - 90
+      var m = this.controller.getScreenAdjustedMatrix().elements
 
-      var off = 0
-      if(e.gamma > 0) {
-        off = Math.PI
-      }
-
-      this.transform =
-        rotateX(up/50)
-        .multiply(
-          rotateY(
-            (((-e.alpha/360) + 1) * Math.PI*2) + off
-          )
-        )
+      this.transform = $M([
+        [m[0],m[1],m[2],0],
+        [m[3],m[4],m[5],0],
+        [m[6],m[7],m[8],0],
+        [0, 0, 0, 1]
+      ]).inverse()
 
       this.fire('change', this.transform)
+
     };
 
     return Pose;
