@@ -45,7 +45,6 @@ export default class Pose extends Notify{
   handleTilt() {
 
     const m = this.controller.getScreenAdjustedMatrix().elements
-    console.log(m)
 
     this.transform = $M([
       [m[0],m[1],m[2],0],

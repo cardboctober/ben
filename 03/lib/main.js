@@ -10,17 +10,16 @@ const pose = new Pose()
 const centre = new Cross()
 // const guide = new Cube(.5)
 
-const brush = new Cross(0,0,1.5,0.1)
+const brush = new Cross(0,0,-1.5,0.1)
 brush.color = '#555'
 const line = new Path()
 
 pose.on('change', transform => {
-  // guide.transform =
-  centre.transform = transform
-  line.transform = transform.inverse()
+  centre.transform = line.transform = transform
 
-  const p = transform.x($V([0,0,1.5,1]))
-  const p2 = transform.x($V([0,0,1.6,1]))
+  const inv = transform.inverse()
+  const p = inv.x($V([0,0,-1.5,1]))
+  const p2 = inv.x($V([0,0,-1.6,1]))
 
   line.add(p,p2)
 

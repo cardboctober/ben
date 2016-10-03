@@ -148,17 +148,23 @@
 
   var Pose = (function (Notify) {
     function Pose () {
-      Notify.call(this)
+      var this$1 = this;
 
-      window.addEventListener('deviceorientation',
-        this.handleOrientation.bind(this),
-        false
-      )
+      Notify.call(this)
 
       window.addEventListener('mousemove',
         this.handleMouse.bind(this),
         {passive:true}
       )
+
+
+      new FULLTILT.getDeviceOrientation({ 'type': 'game' })
+      .then(function (controller) {
+        (this$1.controller = controller)
+          .start(this$1.handleTilt.bind(this$1))
+      })
+      .catch(function (e) { return console.log("no device orientation events"); })
+
 
 
       this.transform = I
@@ -185,24 +191,19 @@
 
     };
 
-    Pose.prototype.handleOrientation = function handleOrientation (e) {
+    Pose.prototype.handleTilt = function handleTilt () {
 
-      var up = ((e.gamma + 180) % 180) - 90
+      var m = this.controller.getScreenAdjustedMatrix().elements
 
-      var off = 0
-      if(e.gamma > 0) {
-        off = Math.PI
-      }
-
-      this.transform =
-        rotateX(up/50)
-        .multiply(
-          rotateY(
-            (((-e.alpha/360) + 1) * Math.PI*2) + off
-          )
-        )
+      this.transform = $M([
+        [m[0],m[1],m[2],0],
+        [m[3],m[4],m[5],0],
+        [m[6],m[7],m[8],0],
+        [0, 0, 0, 1]
+      ]).inverse()
 
       this.fire('change', this.transform)
+
     };
 
     return Pose;
@@ -404,17 +405,16 @@
   var centre = new Cross()
   // const guide = new Cube(.5)
 
-  var brush = new Cross(0,0,1.5,0.1)
+  var brush = new Cross(0,0,-1.5,0.1)
   brush.color = '#555'
   var line = new Path()
 
   pose.on('change', function (transform) {
-    // guide.transform =
-    centre.transform = transform
-    line.transform = transform.inverse()
+    centre.transform = line.transform = transform
 
-    var p = transform.x($V([0,0,1.5,1]))
-    var p2 = transform.x($V([0,0,1.6,1]))
+    var inv = transform.inverse()
+    var p = inv.x($V([0,0,-1.5,1]))
+    var p2 = inv.x($V([0,0,-1.6,1]))
 
     line.add(p,p2)
 
