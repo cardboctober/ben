@@ -8,14 +8,37 @@ export default class Pose extends Notify{
     super()
 
     window.addEventListener('deviceorientation',
-      this.handle.bind(this),
+      this.handleOrientation.bind(this),
       false
     )
+
+    window.addEventListener('mousemove',
+      this.handleMouse.bind(this),
+      {passive:true}
+    )
+
 
     this.transform = I
   }
 
-  handle(e) {
+  handleMouse(e) {
+    if(e.buttons === 0) return this.start = null
+
+    this.start = this.start || e
+
+    this.transform =
+      rotateY(
+        (this.start.clientX - e.clientX) / 100
+      )
+      .multiply(rotateX(
+        (this.start.clientY - e.clientY) / 100
+      ))
+
+    this.fire('change', this.transform)
+
+  }
+
+  handleOrientation(e) {
 
     var up = ((e.gamma + 180) % 180) - 90
 
