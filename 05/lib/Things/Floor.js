@@ -1,6 +1,6 @@
 
 
-export default class Floor {
+export default class Floor  extends Thing {
   constructor () {
     this.data = []
     for (var i = -6; i <= 6; i++) {

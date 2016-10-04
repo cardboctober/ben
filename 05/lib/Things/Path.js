@@ -1,4 +1,4 @@
-export default class Path {
+export default class Path  extends Thing{
   constructor () {
 
     this.data = []

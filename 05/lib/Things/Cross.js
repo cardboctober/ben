@@ -1,4 +1,4 @@
-export default class Cross {
+export default class Cross extends Thing {
   constructor (x=0, y=0, z=0, s=.25) {
 
     this.data = [

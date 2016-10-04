@@ -100,7 +100,7 @@
 
       ctx.save()
       ctx.beginPath()
-        
+
       if(x == 0) {
         ctx.lineTo(0,0)
         ctx.lineTo(this$1.w/2,0)
@@ -117,39 +117,7 @@
 
       obj.forEach( function (obj) {
 
-
-        var t = obj.transform ?
-          camera.multiply(obj.transform) :
-          camera
-        // if(obj.transform) {
-        //
-        // }
-
-        ctx.strokeStyle = obj.color || '#000'
-
-        ctx.beginPath()
-        for (var i = 0; i < obj.data.length; i++) {
-          var l = obj.data[i]
-          var a = t.x(l[0])
-          var b = t.x(l[1])
-
-          a = a.multiply(1/a.e(4))
-          b = b.multiply(1/b.e(4))
-
-          var x = a.e(1)
-          var y = a.e(2)
-          var r = a.distanceFrom(b)
-
-          ctx.moveTo(
-            a.e(1), a.e(2)
-          )
-          ctx.lineTo(
-            b.e(1), b.e(2)
-          )
-
-        }
-        ctx.stroke()
-
+        renderObject(obj, camera, ctx)
 
       })
 
@@ -159,6 +127,46 @@
 
     this.dirty = false
   };
+
+  function renderObject(obj, t, ctx){
+    // console.log("-s")
+
+    if(obj.transform) {
+      t = t.multiply(obj.transform)
+    }
+
+    ctx.strokeStyle = obj.color || '#000'
+
+    ctx.beginPath()
+    for (var i = 0; i < obj.data.length; i++) {
+      var l = obj.data[i]
+      var a = t.x(l[0])
+      var b = t.x(l[1])
+
+      a = a.multiply(1/a.e(4))
+      b = b.multiply(1/b.e(4))
+
+      var x = a.e(1)
+      var y = a.e(2)
+      var r = a.distanceFrom(b)
+
+      ctx.moveTo(
+        a.e(1), a.e(2)
+      )
+      ctx.lineTo(
+        b.e(1), b.e(2)
+      )
+
+    }
+    ctx.stroke()
+
+    if(obj.children) {
+      obj.children.forEach(function (child) { return renderObject(child, t, ctx); }
+      )
+    }
+
+
+  }
 
   var Notify = function Notify() {
     this._callbacks = {}
@@ -247,25 +255,45 @@
     requestAnimationFrame(wrap)
   }
 
-  var Cube = function Cube(s) {
-    if ( s === void 0 ) s=1;
+  // Because Object is already a thing
 
-    this.data = [
-      [[-s,-s,-s, 1], [ s,-s,-s, 1]],
-      [[-s,-s,-s, 1], [-s, s,-s, 1]],
-      [[-s,-s,-s, 1], [-s,-s, s, 1]],
-      [[-s, s, s, 1], [ s, s, s, 1]],
-      [[-s, s, s, 1], [-s,-s, s, 1]],
-      [[-s, s, s, 1], [-s, s,-s, 1]],
-      [[ s, s,-s, 1], [-s, s,-s, 1]],
-      [[ s, s,-s, 1], [ s,-s,-s, 1]],
-      [[ s, s,-s, 1], [ s, s, s, 1]],
-      [[ s,-s, s, 1], [-s,-s, s, 1]],
-      [[ s,-s, s, 1], [ s, s, s, 1]],
-      [[ s,-s, s, 1], [ s,-s,-s, 1]],
-    ]
-    .map(function (l) { return l.map($V); })
+  var Thing = function Thing () {
+    this.transform = I
+    this.data = []
+    this.children = []
   };
+
+  Thing.prototype.add = function add (thing) {
+    this.children.push(thing)
+  };
+
+  var Cube = (function (Thing) {
+    function Cube(s) {
+      if ( s === void 0 ) s=1;
+
+      this.data = [
+        [[-s,-s,-s, 1], [ s,-s,-s, 1]],
+        [[-s,-s,-s, 1], [-s, s,-s, 1]],
+        [[-s,-s,-s, 1], [-s,-s, s, 1]],
+        [[-s, s, s, 1], [ s, s, s, 1]],
+        [[-s, s, s, 1], [-s,-s, s, 1]],
+        [[-s, s, s, 1], [-s, s,-s, 1]],
+        [[ s, s,-s, 1], [-s, s,-s, 1]],
+        [[ s, s,-s, 1], [ s,-s,-s, 1]],
+        [[ s, s,-s, 1], [ s, s, s, 1]],
+        [[ s,-s, s, 1], [-s,-s, s, 1]],
+        [[ s,-s, s, 1], [ s, s, s, 1]],
+        [[ s,-s, s, 1], [ s,-s,-s, 1]],
+      ]
+      .map(function (l) { return l.map($V); })
+    }
+
+    if ( Thing ) Cube.__proto__ = Thing;
+    Cube.prototype = Object.create( Thing && Thing.prototype );
+    Cube.prototype.constructor = Cube;
+
+    return Cube;
+  }(Thing));
 
   // polyfill browser versions
 
@@ -390,14 +418,19 @@
   var renderer = new Renderer()
   var pose = new Pose()
   var cube = new Cube(1)
+  var cube2 = new Cube(0.4)
 
-  pose.on('change', function (transform) {
-    cube.transform = transform
-  })
+  var world = new Thing()
+  world.add(cube)
+  world.add(cube2)
+
+
+  pose.on('change', function (transform) { return world.transform = transform; }
+  )
 
   loop( function (t) {
     renderer.render([
-      cube
+      world
     ])
   })
 

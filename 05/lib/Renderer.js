@@ -71,7 +71,7 @@ export default class Renderer {
 
       ctx.save()
       ctx.beginPath()
-      
+
       if(x == 0) {
         ctx.lineTo(0,0)
         ctx.lineTo(this.w/2,0)
@@ -88,39 +88,7 @@ export default class Renderer {
 
       obj.forEach( obj => {
 
-
-        const t = obj.transform ?
-          camera.multiply(obj.transform) :
-          camera
-        // if(obj.transform) {
-        //
-        // }
-
-        ctx.strokeStyle = obj.color || '#000'
-
-        ctx.beginPath()
-        for (var i = 0; i < obj.data.length; i++) {
-          var l = obj.data[i]
-          var a = t.x(l[0])
-          var b = t.x(l[1])
-
-          a = a.multiply(1/a.e(4))
-          b = b.multiply(1/b.e(4))
-
-          var x = a.e(1)
-          var y = a.e(2)
-          var r = a.distanceFrom(b)
-
-          ctx.moveTo(
-            a.e(1), a.e(2)
-          )
-          ctx.lineTo(
-            b.e(1), b.e(2)
-          )
-
-        }
-        ctx.stroke()
-
+        renderObject(obj, camera, ctx)
 
       })
 
@@ -130,5 +98,46 @@ export default class Renderer {
 
     this.dirty = false
   }
+
+}
+
+function renderObject(obj, t, ctx){
+  // console.log("-s")
+
+  if(obj.transform) {
+    t = t.multiply(obj.transform)
+  }
+
+  ctx.strokeStyle = obj.color || '#000'
+
+  ctx.beginPath()
+  for (var i = 0; i < obj.data.length; i++) {
+    var l = obj.data[i]
+    var a = t.x(l[0])
+    var b = t.x(l[1])
+
+    a = a.multiply(1/a.e(4))
+    b = b.multiply(1/b.e(4))
+
+    var x = a.e(1)
+    var y = a.e(2)
+    var r = a.distanceFrom(b)
+
+    ctx.moveTo(
+      a.e(1), a.e(2)
+    )
+    ctx.lineTo(
+      b.e(1), b.e(2)
+    )
+
+  }
+  ctx.stroke()
+
+  if(obj.children) {
+    obj.children.forEach(child =>
+      renderObject(child, t, ctx)
+    )
+  }
+
 
 }
