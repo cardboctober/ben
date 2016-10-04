@@ -247,29 +247,6 @@
     requestAnimationFrame(wrap)
   }
 
-  var Cross = function Cross (x, y, z, s) {
-    if ( x === void 0 ) x=0;
-    if ( y === void 0 ) y=0;
-    if ( z === void 0 ) z=0;
-    if ( s === void 0 ) s=.25;
-
-
-    this.data = [
-      [
-        $V([x-s,y,z,1]),
-        $V([x+s,y,z,1])
-      ],[
-        $V([x,y-s,z,1]),
-        $V([x,y+s,z,1])
-      ],[
-        $V([x,y,z-s,1]),
-        $V([x,y,z+s,1])
-      ]
-    ]
-
-    this.color = 'rgba(255,255,255,0.4)'
-  };
-
   var Cube = function Cube(s) {
     if ( s === void 0 ) s=1;
 
@@ -288,22 +265,6 @@
       [[ s,-s, s, 1], [ s,-s,-s, 1]],
     ]
     .map(function (l) { return l.map($V); })
-  };
-
-  var Floor = function Floor () {
-    var this$1 = this;
-
-    this.data = []
-    for (var i = -6; i <= 6; i++) {
-      this$1.data.push([
-        $V([i, 0,6, 1]),
-        $V([i, 0, -6, 1])
-      ])
-      this$1.data.push([
-        $V([6, 0,i, 1]),
-        $V([-6, 0, i, 1])
-      ])
-    }
   };
 
   // polyfill browser versions
@@ -428,26 +389,15 @@
 
   var renderer = new Renderer()
   var pose = new Pose()
-  var centre = new Cross()
-  var guide = new Cube(1)
-  guide.color = 'rgba(0,0,0,0.2)'
+  var cube = new Cube(1)
 
   pose.on('change', function (transform) {
-    f.transform = guide.transform =
-    centre.transform = transform
+    cube.transform = transform
   })
-
-  var f = new Floor()
-
-
 
   loop( function (t) {
     renderer.render([
-      guide,
-      centre,
-      f
-      // brush,
-      // line
+      cube
     ])
   })
 
