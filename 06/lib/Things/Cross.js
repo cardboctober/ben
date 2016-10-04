@@ -1,16 +1,18 @@
+import Thing from './Thing.js'
+
 export default class Cross extends Thing {
-  constructor (x=0, y=0, z=0, s=.25) {
+  constructor (s=.25) {
 
     this.data = [
       [
-        $V([x-s,y,z,1]),
-        $V([x+s,y,z,1])
+        $V([0-s,0,0,1]),
+        $V([0+s,0,0,1])
       ],[
-        $V([x,y-s,z,1]),
-        $V([x,y+s,z,1])
+        $V([0,0-s,0,1]),
+        $V([0,0+s,0,1])
       ],[
-        $V([x,y,z-s,1]),
-        $V([x,y,z+s,1])
+        $V([0,0,0-s,1]),
+        $V([0,0,0+s,1])
       ]
     ]
 

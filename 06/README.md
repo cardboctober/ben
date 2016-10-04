@@ -1,4 +1,3 @@
-# 5 Heirachical rendering
+# 6 Lines
 
-* allows groups of objects to be transformed together
-* ctx helps with storing the stroke style
+* 

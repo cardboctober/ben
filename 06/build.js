@@ -261,6 +261,12 @@
 
   var rnd = function (n) { return (Math.random()-.5) * n * 2; }
 
+  var fill = function (array, fn) {
+    for (var i = 0; i < array.length; i++) {
+      array[i] = fn(i)
+    }
+  }
+
   // Because Object is already a thing
 
   var Thing = function Thing () {
@@ -299,6 +305,81 @@
     Cube.prototype.constructor = Cube;
 
     return Cube;
+  }(Thing));
+
+  var Cross = (function (Thing) {
+    function Cross (s) {
+      if ( s === void 0 ) s=.25;
+
+
+      this.data = [
+        [
+          $V([0-s,0,0,1]),
+          $V([0+s,0,0,1])
+        ],[
+          $V([0,0-s,0,1]),
+          $V([0,0+s,0,1])
+        ],[
+          $V([0,0,0-s,1]),
+          $V([0,0,0+s,1])
+        ]
+      ]
+
+      this.color = 'rgba(255,255,255,0.4)'
+    }
+
+    if ( Thing ) Cross.__proto__ = Thing;
+    Cross.prototype = Object.create( Thing && Thing.prototype );
+    Cross.prototype.constructor = Cross;
+
+    return Cross;
+  }(Thing));
+
+  var Path = (function (Thing) {
+    function Path () {
+
+      this.data = []
+      this.color = '#fff'
+
+    }
+
+    if ( Thing ) Path.__proto__ = Thing;
+    Path.prototype = Object.create( Thing && Thing.prototype );
+    Path.prototype.constructor = Path;
+
+    Path.prototype.clear = function clear () {
+      this.data = []
+      this.last = this.last2 = null
+    };
+
+    Path.prototype.add = function add (p, p2) {
+      var this$1 = this;
+
+
+      if(this.last &&
+        this.last.distanceFrom(p) < 0.1) {
+        return false
+      }
+
+      this.data.push([
+        p,
+        this.last || p
+      ])
+
+      this.data.push([
+        p2,
+        this.last2 || p2
+      ])
+
+      this.last = p
+      this.last2 = p2
+
+      while(this.data.length > 200)
+        { this$1.data.shift() }
+
+    };
+
+    return Path;
   }(Thing));
 
   // polyfill browser versions
@@ -426,28 +507,111 @@
 
   var world = new Thing()
 
-  world.color = 'red'
+  var points = new Array(50)
+  fill(points, function (_) { return ({
+    point: $V([rnd(3),rnd(3),rnd(3)]),
+    heading: $V([rnd(3),rnd(3),rnd(3)]),
+    velocity: rnd(0.0002)
+  }); })
 
-  for (var i = 0; i < 20; i++) {
-    var cube = new Cube(rnd(0.5))
+  var pcubes = points.map( function (p) {
+    var cube = new Cross(0.01)
+    cube.color = 'rgba(255,255,255,0.4)'
+
+    cube.p = p
+
     cube.transform =
-      translate(rnd(1.5), rnd(1.5),rnd(1.5))
-      .multiply(rotateX(rnd(2)))
-      .multiply(rotateY(rnd(2)))
+      translate(
+        p.point.e(1),
+        p.point.e(2),
+        p.point.e(3)
+      )
+
     world.add(cube)
-    cube.color = "hsla(" + (rnd(360)) + ",50%,80%,.6)"
+
+    return cube
+  })
+
+
+  var o = {
+    data: [],
+    color: 'rgba(255,255,255,0.3)'
   }
 
-  // cube2.transform = translate(2,2,2)
-
-
+  world.add(o)
 
   pose.on('change', function (transform) { return world.transform = transform; }
   )
 
+  var line = new Path()
+
   loop( function (t) {
+
+    var ps = pcubes.map( function (cube) {
+
+      var point =
+        cube.p.heading
+        .x(t * cube.p.velocity)
+        .add(cube.p.point)
+
+      cube.transform =
+        translate(
+          point.e(1) % 2,
+          point.e(2) % 2,
+          point.e(3) % 2
+        )
+
+      return $V([
+        point.e(1) % 2,
+        point.e(2) % 2,
+        point.e(3) % 2
+      ])
+    })
+
+    var lines = []
+    ps.forEach(function (a) {
+      ps.forEach(function (b) {
+        if(a != b)
+        { lines.push([
+          a,b,a.distanceFrom(b)
+        ]) }
+      })
+    })
+
+    lines.sort(function (a,b) {
+      return a[2] - b[2]
+    })
+
+
+
+
+    o.data = lines.slice(0,60)
+    .map(function (l) {
+      return [
+        $V([
+          l[0].e(1),
+          l[0].e(2),
+          l[0].e(3),
+          1
+        ]),
+        $V([
+          l[1].e(1),
+          l[1].e(2),
+          l[1].e(3),
+          1
+        ])
+      ]
+    })
+
+    // console.log(lines.length)
+
+    // world.transform
+      // = rotateX(t/1000)
+
+
+
     renderer.render([
-      world
+      world,
     ])
   })
 
