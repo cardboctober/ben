@@ -88,6 +88,9 @@ export default class Renderer {
 
       obj.forEach( obj => {
 
+        // reset context
+        ctx.strokeStyle = '#000'
+
         renderObject(obj, camera, ctx)
 
       })
@@ -104,11 +107,11 @@ export default class Renderer {
 function renderObject(obj, t, ctx){
   // console.log("-s")
 
-  if(obj.transform) {
+  if(obj.transform)
     t = t.multiply(obj.transform)
-  }
 
-  ctx.strokeStyle = obj.color || '#000'
+  if(obj.color)
+    ctx.strokeStyle = obj.color
 
   ctx.beginPath()
   for (var i = 0; i < obj.data.length; i++) {

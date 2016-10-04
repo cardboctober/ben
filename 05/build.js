@@ -117,6 +117,9 @@
 
       obj.forEach( function (obj) {
 
+        // reset context
+        ctx.strokeStyle = '#000'
+
         renderObject(obj, camera, ctx)
 
       })
@@ -131,11 +134,11 @@
   function renderObject(obj, t, ctx){
     // console.log("-s")
 
-    if(obj.transform) {
-      t = t.multiply(obj.transform)
-    }
+    if(obj.transform)
+      { t = t.multiply(obj.transform) }
 
-    ctx.strokeStyle = obj.color || '#000'
+    if(obj.color)
+      { ctx.strokeStyle = obj.color }
 
     ctx.beginPath()
     for (var i = 0; i < obj.data.length; i++) {
@@ -254,6 +257,9 @@
 
     requestAnimationFrame(wrap)
   }
+
+
+  var rnd = function (n) { return (Math.random()-.5) * n * 2; }
 
   // Because Object is already a thing
 
@@ -417,12 +423,23 @@
 
   var renderer = new Renderer()
   var pose = new Pose()
-  var cube = new Cube(1)
-  var cube2 = new Cube(0.4)
 
   var world = new Thing()
-  world.add(cube)
-  world.add(cube2)
+
+  world.color = 'red'
+
+  for (var i = 0; i < 20; i++) {
+    var cube = new Cube(rnd(0.5))
+    cube.transform =
+      translate(rnd(1.5), rnd(1.5),rnd(1.5))
+      .multiply(rotateX(rnd(2)))
+      .multiply(rotateY(rnd(2)))
+    world.add(cube)
+    cube.color = "hsla(" + (rnd(360)) + ",50%,80%,.6)"
+  }
+
+  // cube2.transform = translate(2,2,2)
+
 
 
   pose.on('change', function (transform) { return world.transform = transform; }
