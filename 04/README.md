@@ -1,6 +1,8 @@
-# 3 Trace
+# 4 Grid
 
-Multiple object + user interaction
+Larger objects - 12x12 grid
 
-* Max suggested a darker background because the device would be so close to your eyes
-* Things are wrong because Pose calculation is hard
+* other hacks have floors, I wanted one
+* my renderer wouldn't handle objects bigger than the screen used canvas clipping to render both of them
+
+
