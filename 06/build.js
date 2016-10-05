@@ -140,28 +140,34 @@
     if(obj.color)
       { ctx.strokeStyle = obj.color }
 
-    ctx.beginPath()
-    for (var i = 0; i < obj.data.length; i++) {
-      var l = obj.data[i]
-      var a = t.x(l[0])
-      var b = t.x(l[1])
+    if(obj.render) {
+      obj.render(ctx, t)
 
-      a = a.multiply(1/a.e(4))
-      b = b.multiply(1/b.e(4))
+    } else {
+      ctx.beginPath()
+      for (var i = 0; i < obj.data.length; i++) {
+        var l = obj.data[i]
+        var a = t.x(l[0])
+        var b = t.x(l[1])
 
-      var x = a.e(1)
-      var y = a.e(2)
-      var r = a.distanceFrom(b)
+        a = a.multiply(1/a.e(4))
+        b = b.multiply(1/b.e(4))
 
-      ctx.moveTo(
-        a.e(1), a.e(2)
-      )
-      ctx.lineTo(
-        b.e(1), b.e(2)
-      )
+        var x = a.e(1)
+        var y = a.e(2)
+        var r = a.distanceFrom(b)
 
+        ctx.moveTo(
+          a.e(1), a.e(2)
+        )
+        ctx.lineTo(
+          b.e(1), b.e(2)
+        )
+
+      }
+      ctx.stroke()
     }
-    ctx.stroke()
+
 
     if(obj.children) {
       obj.children.forEach(function (child) { return renderObject(child, t, ctx); }
@@ -266,6 +272,9 @@
       array[i] = fn(i)
     }
   }
+
+  // deal with weird mod behaviour
+  // export const wrap = (v, min, max) =>
 
   // Because Object is already a thing
 
@@ -507,38 +516,155 @@
 
   var world = new Thing()
 
-  var points = new Array(50)
-  fill(points, function (_) { return ({
-    point: $V([rnd(3),rnd(3),rnd(3)]),
-    heading: $V([rnd(3),rnd(3),rnd(3)]),
-    velocity: rnd(0.0002)
-  }); })
+  // points that are at places at a particular time
+  var Points = function Points(n) {
+    this.t = 0
 
-  var pcubes = points.map( function (p) {
-    var cube = new Cross(0.01)
-    cube.color = 'rgba(255,255,255,0.4)'
+    this.n = n
+    this.position = new Float32Array(3 * n)
+    this.velocity = new Float32Array(3 * n)
 
-    cube.p = p
+    // half used
+    this.distance = new Float32Array(n * n)
 
-    cube.transform =
-      translate(
-        p.point.e(1),
-        p.point.e(2),
-        p.point.e(3)
-      )
+    fill(this.position, function (_) { return rnd(2); })
+    fill(this.velocity, function (_) { return rnd(0.0002); })
+  };
 
-    world.add(cube)
+  Points.prototype.incr = function incr (delta) {
+      var this$1 = this;
 
-    return cube
-  })
+    for (var i = 0; i < this.position.length; i++) {
+      this$1.position[i] += this$1.velocity[i] * delta
+      if(this$1.position[i] < -2) {
+        this$1.position[i] = 2
+      } else if(this$1.position[i] > 2) {
+        this$1.position[i] = -2
+      }
+    }
+    this.t += delta
+  };
+
+  Points.prototype.setTime = function setTime (t) {
+    this.incr(t - this.t)
+  };
+
+  Points.prototype.computeDistances = function computeDistances () {
+      var this$1 = this;
+
+    for (var i = 0; i < this.n; i++) {
+      for (var j = 0; j < this.n; j++) {
+        this$1.distance[i * this$1.n + j] =
+          Math.pow(this$1.position[i*3  ] - this$1.position[j*3  ], 2)
+          +
+          Math.pow(this$1.position[i*3 + 1] - this$1.position[j*3 + 1], 2)
+          +
+          Math.pow(this$1.position[i*3 + 2] - this$1.position[j*3 + 2], 2)
+
+        // HACK (horrible) make distance larger if we are close to edges
+        var d = Math.max(
+          Math.abs(this$1.position[i*3  ]),
+          Math.abs(this$1.position[i*3 + 1]),
+          Math.abs(this$1.position[i*3 + 2]),
+          Math.abs(this$1.position[j*3  ]),
+          Math.abs(this$1.position[j*3 + 1]),
+          Math.abs(this$1.position[j*3 + 2])
+        )
+
+        if(d > 1.5) {
+          var close = (d - 1.5) * 10
+          this$1.distance[i * this$1.n + j] += close
+        }
+      }
+    }
+  };
+
+  Points.prototype.points = function points () {
+      var this$1 = this;
 
 
-  var o = {
+    var data = new Array(this.n)
+    for (var i = 0; i < this.n; i++) {
+      data[i] = [
+        $V([
+          this$1.position[i*3],
+          this$1.position[i*3 + 1],
+          this$1.position[i*3 + 2],
+          1
+        ]),
+        $V([
+          this$1.position[i*3] + 0.1,
+          this$1.position[i*3 + 1] + 0.1,
+          this$1.position[i*3 + 2] + 0.1,
+          1
+        ])
+      ]
+    }
+
+    return {
+      data: data
+    }
+
+  };
+
+  Points.prototype.lines = function lines (minDistance) {
+      var this$1 = this;
+      if ( minDistance === void 0 ) minDistance=3;
+
+
+    var things = []
+
+    for (var i = 0; i < this.n; i++) {
+      for (var j = i + 1; j < this.n; j++) {
+
+        var opacity = 1 - (this$1.distance[i * this$1.n + j]/minDistance)
+
+        if(opacity < 0) { continue }
+
+        things.push({
+          color: ("rgba(255,255,255," + opacity + ")"),
+          data: [[
+            $V([
+              this$1.position[i*3],
+              this$1.position[i*3 + 1],
+              this$1.position[i*3 + 2],
+              1
+            ]),
+            $V([
+              this$1.position[j*3],
+              this$1.position[j*3 + 1],
+              this$1.position[j*3 + 2],
+              1
+            ])
+          ]]
+        })
+
+      }
+    }
+
+    return things
+
+  };
+
+  var cloud = new Points(25)
+
+  cloud.computeDistances()
+
+  console.log(cloud.points())
+
+  var cloudHolder = {
     data: [],
-    color: 'rgba(255,255,255,0.3)'
+    children: [
+      {
+        data: [],
+        children: cloud.lines()
+      }
+    ]
   }
 
-  world.add(o)
+
+  world.add(cloudHolder)
+
 
   pose.on('change', function (transform) { return world.transform = transform; }
   )
@@ -547,68 +673,9 @@
 
   loop( function (t) {
 
-    var ps = pcubes.map( function (cube) {
-
-      var point =
-        cube.p.heading
-        .x(t * cube.p.velocity)
-        .add(cube.p.point)
-
-      cube.transform =
-        translate(
-          point.e(1) % 2,
-          point.e(2) % 2,
-          point.e(3) % 2
-        )
-
-      return $V([
-        point.e(1) % 2,
-        point.e(2) % 2,
-        point.e(3) % 2
-      ])
-    })
-
-    var lines = []
-    ps.forEach(function (a) {
-      ps.forEach(function (b) {
-        if(a != b)
-        { lines.push([
-          a,b,a.distanceFrom(b)
-        ]) }
-      })
-    })
-
-    lines.sort(function (a,b) {
-      return a[2] - b[2]
-    })
-
-
-
-
-    o.data = lines.slice(0,60)
-    .map(function (l) {
-      return [
-        $V([
-          l[0].e(1),
-          l[0].e(2),
-          l[0].e(3),
-          1
-        ]),
-        $V([
-          l[1].e(1),
-          l[1].e(2),
-          l[1].e(3),
-          1
-        ])
-      ]
-    })
-
-    // console.log(lines.length)
-
-    // world.transform
-      // = rotateX(t/1000)
-
-
+    cloud.setTime(t)
+    cloud.computeDistances()
+    cloudHolder.children = cloud.lines()
 
     renderer.render([
       world,
