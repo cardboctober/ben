@@ -581,7 +581,7 @@
 
   var world = new Thing()
 
-  var cloud = new MeshCloud(20)
+  var cloud = new MeshCloud(15)
 
   world.add(cloud)
 
@@ -590,14 +590,13 @@
 
   loop( function (t) {
 
-
-    cloud.setTime(t)
-    cloud.computeDistances()
-    cloud.computeLines()
-
     renderer.render([
       world
     ])
+
+    cloud.setTime(t)
+    cloud.computeDistances()
+    cloud.computeLines(4)
 
   })
 

@@ -10,7 +10,7 @@ const pose = new Pose()
 
 const world = new Thing()
 
-const cloud = new MeshCloud(20)
+const cloud = new MeshCloud(15)
 
 world.add(cloud)
 
@@ -20,14 +20,13 @@ pose.on('change', transform =>
 
 loop( t => {
 
-
-  cloud.setTime(t)
-  cloud.computeDistances()
-  cloud.computeLines()
-
   renderer.render([
     world
   ])
+
+  cloud.setTime(t)
+  cloud.computeDistances()
+  cloud.computeLines(4)
 
 })
 
