@@ -316,79 +316,144 @@
     return Cube;
   }(Thing));
 
-  var Cross = (function (Thing) {
-    function Cross (s) {
-      if ( s === void 0 ) s=.25;
+  var MeshCloud = (function (Thing) {
+    function MeshCloud(n) {
+      Thing.call(this)
 
+      this.t = 0
 
-      this.data = [
-        [
-          $V([0-s,0,0,1]),
-          $V([0+s,0,0,1])
-        ],[
-          $V([0,0-s,0,1]),
-          $V([0,0+s,0,1])
-        ],[
-          $V([0,0,0-s,1]),
-          $V([0,0,0+s,1])
-        ]
-      ]
+      this.n = n
+      this.position = new Float32Array(3 * n)
+      this.velocity = new Float32Array(3 * n)
 
-      this.color = 'rgba(255,255,255,0.4)'
+      // half used
+      this.distance = new Float32Array(n * n)
+
+      fill(this.position, function (_) { return rnd(2); })
+      fill(this.velocity, function (_) { return rnd(0.0002); })
     }
 
-    if ( Thing ) Cross.__proto__ = Thing;
-    Cross.prototype = Object.create( Thing && Thing.prototype );
-    Cross.prototype.constructor = Cross;
+    if ( Thing ) MeshCloud.__proto__ = Thing;
+    MeshCloud.prototype = Object.create( Thing && Thing.prototype );
+    MeshCloud.prototype.constructor = MeshCloud;
 
-    return Cross;
-  }(Thing));
+    MeshCloud.prototype.incr = function incr (delta) {
+      var this$1 = this;
 
-  var Path = (function (Thing) {
-    function Path () {
-
-      this.data = []
-      this.color = '#fff'
-
-    }
-
-    if ( Thing ) Path.__proto__ = Thing;
-    Path.prototype = Object.create( Thing && Thing.prototype );
-    Path.prototype.constructor = Path;
-
-    Path.prototype.clear = function clear () {
-      this.data = []
-      this.last = this.last2 = null
+      for (var i = 0; i < this.position.length; i++) {
+        this$1.position[i] += this$1.velocity[i] * delta
+        if(this$1.position[i] < -2) {
+          this$1.position[i] = 2
+        } else if(this$1.position[i] > 2) {
+          this$1.position[i] = -2
+        }
+      }
+      this.t += delta
     };
 
-    Path.prototype.add = function add (p, p2) {
+    MeshCloud.prototype.setTime = function setTime (t) {
+      this.incr(t - this.t)
+    };
+
+    MeshCloud.prototype.computeDistances = function computeDistances () {
+      var this$1 = this;
+
+      for (var i = 0; i < this.n; i++) {
+        for (var j = 0; j < this.n; j++) {
+          this$1.distance[i * this$1.n + j] =
+            Math.pow(this$1.position[i*3    ] - this$1.position[j*3    ], 2)
+            +
+            Math.pow(this$1.position[i*3 + 1] - this$1.position[j*3 + 1], 2)
+            +
+            Math.pow(this$1.position[i*3 + 2] - this$1.position[j*3 + 2], 2)
+
+          // HACK (horrible) make distance larger if we are close to edges
+          var d = Math.max(
+            Math.abs(this$1.position[i*3    ]),
+            Math.abs(this$1.position[i*3 + 1]),
+            Math.abs(this$1.position[i*3 + 2]),
+            Math.abs(this$1.position[j*3    ]),
+            Math.abs(this$1.position[j*3 + 1]),
+            Math.abs(this$1.position[j*3 + 2])
+          )
+
+          if(d > 1.8) {
+            var close = (d - 1.8) * 10
+            this$1.distance[i * this$1.n + j] += close
+          }
+        }
+      }
+    };
+
+    MeshCloud.prototype.points = function points () {
       var this$1 = this;
 
 
-      if(this.last &&
-        this.last.distanceFrom(p) < 0.1) {
-        return false
+      var data = new Array(this.n)
+      for (var i = 0; i < this.n; i++) {
+        data[i] = [
+          $V([
+            this$1.position[i*3],
+            this$1.position[i*3 + 1],
+            this$1.position[i*3 + 2],
+            1
+          ]),
+          $V([
+            this$1.position[i*3] + 0.1,
+            this$1.position[i*3 + 1] + 0.1,
+            this$1.position[i*3 + 2] + 0.1,
+            1
+          ])
+        ]
       }
 
-      this.data.push([
-        p,
-        this.last || p
-      ])
-
-      this.data.push([
-        p2,
-        this.last2 || p2
-      ])
-
-      this.last = p
-      this.last2 = p2
-
-      while(this.data.length > 200)
-        { this$1.data.shift() }
+      return {
+        data: data
+      }
 
     };
 
-    return Path;
+    MeshCloud.prototype.computeLines = function computeLines (minDistance) {
+      var this$1 = this;
+      if ( minDistance === void 0 ) minDistance=3;
+
+
+      var things = []
+
+      for (var i = 0; i < this.n; i++) {
+        for (var j = i + 1; j < this.n; j++) {
+
+          var opacity = 1 - (this$1.distance[i * this$1.n + j]/minDistance)
+
+          if(opacity < 0) { continue }
+
+          things.push({
+            color: ("rgba(255,255,255," + opacity + ")"),
+            data: [[
+              $V([
+                this$1.position[i*3],
+                this$1.position[i*3 + 1],
+                this$1.position[i*3 + 2],
+                1
+              ]),
+              $V([
+                this$1.position[j*3],
+                this$1.position[j*3 + 1],
+                this$1.position[j*3 + 2],
+                1
+              ])
+            ]]
+          })
+
+        }
+      }
+
+
+      return this.children = things
+
+    };
+
+    return MeshCloud;
   }(Thing));
 
   // polyfill browser versions
@@ -516,170 +581,24 @@
 
   var world = new Thing()
 
-  // points that are at places at a particular time
-  var Points = function Points(n) {
-    this.t = 0
+  var cloud = new MeshCloud(20)
 
-    this.n = n
-    this.position = new Float32Array(3 * n)
-    this.velocity = new Float32Array(3 * n)
-
-    // half used
-    this.distance = new Float32Array(n * n)
-
-    fill(this.position, function (_) { return rnd(2); })
-    fill(this.velocity, function (_) { return rnd(0.0002); })
-  };
-
-  Points.prototype.incr = function incr (delta) {
-      var this$1 = this;
-
-    for (var i = 0; i < this.position.length; i++) {
-      this$1.position[i] += this$1.velocity[i] * delta
-      if(this$1.position[i] < -2) {
-        this$1.position[i] = 2
-      } else if(this$1.position[i] > 2) {
-        this$1.position[i] = -2
-      }
-    }
-    this.t += delta
-  };
-
-  Points.prototype.setTime = function setTime (t) {
-    this.incr(t - this.t)
-  };
-
-  Points.prototype.computeDistances = function computeDistances () {
-      var this$1 = this;
-
-    for (var i = 0; i < this.n; i++) {
-      for (var j = 0; j < this.n; j++) {
-        this$1.distance[i * this$1.n + j] =
-          Math.pow(this$1.position[i*3  ] - this$1.position[j*3  ], 2)
-          +
-          Math.pow(this$1.position[i*3 + 1] - this$1.position[j*3 + 1], 2)
-          +
-          Math.pow(this$1.position[i*3 + 2] - this$1.position[j*3 + 2], 2)
-
-        // HACK (horrible) make distance larger if we are close to edges
-        var d = Math.max(
-          Math.abs(this$1.position[i*3  ]),
-          Math.abs(this$1.position[i*3 + 1]),
-          Math.abs(this$1.position[i*3 + 2]),
-          Math.abs(this$1.position[j*3  ]),
-          Math.abs(this$1.position[j*3 + 1]),
-          Math.abs(this$1.position[j*3 + 2])
-        )
-
-        if(d > 1.5) {
-          var close = (d - 1.5) * 10
-          this$1.distance[i * this$1.n + j] += close
-        }
-      }
-    }
-  };
-
-  Points.prototype.points = function points () {
-      var this$1 = this;
-
-
-    var data = new Array(this.n)
-    for (var i = 0; i < this.n; i++) {
-      data[i] = [
-        $V([
-          this$1.position[i*3],
-          this$1.position[i*3 + 1],
-          this$1.position[i*3 + 2],
-          1
-        ]),
-        $V([
-          this$1.position[i*3] + 0.1,
-          this$1.position[i*3 + 1] + 0.1,
-          this$1.position[i*3 + 2] + 0.1,
-          1
-        ])
-      ]
-    }
-
-    return {
-      data: data
-    }
-
-  };
-
-  Points.prototype.lines = function lines (minDistance) {
-      var this$1 = this;
-      if ( minDistance === void 0 ) minDistance=3;
-
-
-    var things = []
-
-    for (var i = 0; i < this.n; i++) {
-      for (var j = i + 1; j < this.n; j++) {
-
-        var opacity = 1 - (this$1.distance[i * this$1.n + j]/minDistance)
-
-        if(opacity < 0) { continue }
-
-        things.push({
-          color: ("rgba(255,255,255," + opacity + ")"),
-          data: [[
-            $V([
-              this$1.position[i*3],
-              this$1.position[i*3 + 1],
-              this$1.position[i*3 + 2],
-              1
-            ]),
-            $V([
-              this$1.position[j*3],
-              this$1.position[j*3 + 1],
-              this$1.position[j*3 + 2],
-              1
-            ])
-          ]]
-        })
-
-      }
-    }
-
-    return things
-
-  };
-
-  var cloud = new Points(25)
-
-  cloud.computeDistances()
-
-  console.log(cloud.points())
-
-  var cloudHolder = {
-    data: [],
-    children: [
-      {
-        data: [],
-        children: cloud.lines()
-      }
-    ]
-  }
-
-
-  world.add(cloudHolder)
-
+  world.add(cloud)
 
   pose.on('change', function (transform) { return world.transform = transform; }
   )
 
-  var line = new Path()
-
   loop( function (t) {
+
 
     cloud.setTime(t)
     cloud.computeDistances()
-    cloudHolder.children = cloud.lines()
+    cloud.computeLines()
 
     renderer.render([
-      world,
+      world
     ])
+
   })
 
   fullscreen()
