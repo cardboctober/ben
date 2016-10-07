@@ -14,9 +14,14 @@ const cloud = new MeshCloud(15)
 
 world.add(cloud)
 
-pose.on('change', transform =>
-  world.transform = transform
-)
+let angle = 0
+
+pose.on('change', transform => {
+    window.x = world.transform = transform
+
+    const track = $V([1,0,0,0])
+    angle = track.angleFrom(transform.x(track)) || 0
+})
 
 loop( t => {
 
@@ -24,7 +29,7 @@ loop( t => {
     world
   ])
 
-  cloud.setTime(t)
+  cloud.setTime(angle*50000)
   cloud.computeDistances()
   cloud.computeLines(4)
 
