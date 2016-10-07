@@ -572,7 +572,7 @@ loop( function (t) {
     world
   ])
 
-  cloud.setTime(angle*50000)
+  cloud.setTime(angle*5000)
   cloud.computeDistances()
   cloud.computeLines(4)
 
