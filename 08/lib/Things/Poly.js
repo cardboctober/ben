@@ -12,7 +12,7 @@ export default class Poly extends Thing {
     this.points
       .map(p => transform.x(p))
       .forEach(p => {
-        ctx.lineTo(p.e(1), p.e(2))
+        ctx.lineTo(p.e(1)/p.e(4), p.e(2)/p.e(4))
       })
     ctx.fill()
   }

@@ -299,7 +299,7 @@ var Poly = (function (Thing$$1) {
     this.points
       .map(function (p) { return transform.x(p); })
       .forEach(function (p) {
-        ctx.lineTo(p.e(1), p.e(2))
+        ctx.lineTo(p.e(1)/p.e(4), p.e(2)/p.e(4))
       })
     ctx.fill()
   };
