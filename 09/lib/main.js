@@ -3,28 +3,21 @@ import Pose from './Pose.js'
 import {loop, rnd} from './util.js'
 import Thing from './Things/Thing.js'
 import Poly from './Things/Poly.js'
+import DSphere from './Things/DSphere.js'
+import DFloor from './Things/DFloor.js'
 
 const renderer = new Renderer()
 const pose = new Pose()
 
 const world = new Thing()
 
-const a = 3
-const h = (Math.sqrt(3)/2)*a
-
-
-const triangle = new Poly([
-  [0,h/2,0,1],
-  [a/2,-h/2,0,1],
-  [-a/2,-h/2,0,1],
-])
-
-triangle.fill = '#08f'
-world.add(triangle)
+const floor = new DFloor(2)
+world.add(floor)
+floor.color = 'rgba(255,255,255,0.7)'
 
 
 pose.on('change', transform => {
-    window.x = world.transform = transform
+    world.transform = transform
 })
 
 loop( t => {

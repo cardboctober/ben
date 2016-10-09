@@ -1,11 +1,6 @@
 // Source - https://github.com/ironwallaby/delaunay
 
-var Delaunay;
-
-(function() {
-  "use strict";
-
-  var EPSILON = 1.0 / 1048576.0;
+  const EPSILON = 1.0 / 1048576.0;
 
   function supertriangle(vertices) {
     var xmin = Number.POSITIVE_INFINITY,
@@ -103,8 +98,7 @@ var Delaunay;
     }
   }
 
-  Delaunay = {
-    triangulate: function(vertices, key) {
+export const triangulate = function(vertices, key) {
       var n = vertices.length,
           i, j, indices, st, open, closed, edges, dx, dy, a, b, c;
 
@@ -201,8 +195,9 @@ var Delaunay;
 
       /* Yay, we're done! */
       return open;
-    },
-    contains: function(tri, p) {
+    }
+
+export const contains = function(tri, p) {
       /* Bounding box test first, for quick rejections. */
       if((p[0] < tri[0][0] && p[0] < tri[1][0] && p[0] < tri[2][0]) ||
          (p[0] > tri[0][0] && p[0] > tri[1][0] && p[0] > tri[2][0]) ||
@@ -229,8 +224,10 @@ var Delaunay;
 
       return [u, v];
     }
-  };
 
-  if(typeof module !== "undefined")
-    module.exports = Delaunay;
-})();
+
+
+export default {
+  triangulate,
+  contains
+}
