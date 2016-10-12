@@ -18,4 +18,7 @@ export const fill = (array, fn) => {
 }
 
 // deal with weird mod behaviour
-// export const wrap = (v, min, max) =>
+export const wrap = (v, min, max) =>
+  (v > max) ? min :
+  (v < min) ? max :
+  v

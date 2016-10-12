@@ -270,7 +270,9 @@ var rnd = function (n) { return (Math.random()-.5) * n * 2; }
 
 
 // deal with weird mod behaviour
-// export const wrap = (v, min, max) =>
+var wrap = function (v, min, max) { return (v > max) ? min :
+  (v < min) ? max :
+  v; }
 
 // Because Object is already a thing
 
@@ -287,32 +289,39 @@ Thing.prototype.add = function add (thing) {
 var norm = function (v) { return v.multiply(1/v.e(4)); }
 
 
-var Ball = (function (Thing$$1) {
-  function Ball(x,y,z,r) {
+var Balls = (function (Thing$$1) {
+  function Balls(balls) {
     Thing$$1.call(this)
-    this.position  = $V([x,y,z,1])
-    this.positionR = $V([x+r,y,z,1])
-    this.r = r
+
+    this.balls = balls
+
+    // this.position  = $V([x,y,z,1])
+    // this.positionR = $V([x+r,y,z,1])
+    // this.r = r
   }
 
-  if ( Thing$$1 ) Ball.__proto__ = Thing$$1;
-  Ball.prototype = Object.create( Thing$$1 && Thing$$1.prototype );
-  Ball.prototype.constructor = Ball;
+  if ( Thing$$1 ) Balls.__proto__ = Thing$$1;
+  Balls.prototype = Object.create( Thing$$1 && Thing$$1.prototype );
+  Balls.prototype.constructor = Balls;
 
-  Ball.prototype.render = function render (ctx, transform) {
+  Balls.prototype.render = function render (ctx, transform) {
     ctx.fillStyle = this.fill || '#000'
     ctx.beginPath()
 
-    var p = norm(transform.x(this.position))
-    var r = norm(transform.x(this.positionR))
-                .distanceFrom(p)
+    this.balls
+      .forEach(function (b) {
+        var v = norm(transform.x($V([b.x,b.y,b.z,1])))
+        var r = norm(transform.x($V([b.x+b.r,b.y,b.z,1])))
+          .distanceFrom(v)
 
-    ctx.arc(p.e(1), p.e(2), r, 0, Math.PI*2)
+        ctx.moveTo(v.e(1)+r, v.e(2))
+        ctx.arc(v.e(1), v.e(2), r, 0, Math.PI*2)
+      })
 
-    ctx.fill()
+    ctx.stroke()
   };
 
-  return Ball;
+  return Balls;
 }(Thing));
 
 // polyfill browser versions
@@ -440,28 +449,36 @@ var pose = new Pose()
 
 var world = new Thing()
 
-var ball = new Ball(0,0,0,1)
+var data = Array.from({length: 30}, function (_) { return ({
+  x: rnd(.5),
+  y: rnd(5),
+  z: rnd(.5),
+  r: rnd(.2),
+
+  yv: rnd(0.001)
+}); })
+
+var ball = new Balls(data)
 world.add(ball)
 
-
-for (var i = 0; i < 8; i++) {
-  var b = new Ball( rnd(1.5), rnd(1.5), rnd(1.5), .2 )
-
-  b.fill = 'rgba(255,255,255,0.3)'
-
-  world.add(b
-    )
-}
-
-
-ball.fill = 'rgba(255,255,255,0.3)'
+ball.color = '#08f'
 
 
 pose.on('change', function (transform) {
     world.transform = transform
 })
 
+
+var lastT = 0
 loop( function (t) {
+
+  data.forEach( function (d) {
+    d.y += (t - lastT) * d.yv
+
+    d.y = wrap(d.y, -5, 5)
+
+  })
+  lastT = t
 
   renderer.render([
     world

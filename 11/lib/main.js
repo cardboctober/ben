@@ -1,36 +1,44 @@
 import Renderer from './Renderer.js'
 import Pose from './Pose.js'
-import {loop, rnd} from './util.js'
+import {loop, rnd, wrap} from './util.js'
 import Thing from './Things/Thing.js'
-import Ball from './Things/Ball.js'
+import Balls from './Things/Balls.js'
 
 const renderer = new Renderer()
 const pose = new Pose()
 
 const world = new Thing()
 
-const ball = new Ball(0,0,0,1)
+const data = Array.from({length: 30}, _ => ({
+  x: rnd(.5),
+  y: rnd(5),
+  z: rnd(.5),
+  r: rnd(.2),
+
+  yv: rnd(0.001)
+}))
+
+const ball = new Balls(data)
 world.add(ball)
 
-
-for (var i = 0; i < 8; i++) {
-  var b = new Ball( rnd(1.5), rnd(1.5), rnd(1.5), .2 )
-
-  b.fill = 'rgba(255,255,255,0.3)'
-
-  world.add(b
-    )
-}
-
-
-ball.fill = 'rgba(255,255,255,0.3)'
+ball.color = '#08f'
 
 
 pose.on('change', transform => {
     world.transform = transform
 })
 
+
+var lastT = 0
 loop( t => {
+
+  data.forEach( d => {
+    d.y += (t - lastT) * d.yv
+
+    d.y = wrap(d.y, -5, 5)
+
+  })
+  lastT = t
 
   renderer.render([
     world
