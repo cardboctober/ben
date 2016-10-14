@@ -4,24 +4,68 @@ import {loop, rnd, wrap} from './util.js'
 import Thing from './Things/Thing.js'
 import Balls from './Things/Balls.js'
 
+import Path from './Things/Path.js'
+
+
 const renderer = new Renderer()
 const pose = new Pose()
 
 const world = new Thing()
 
-const data = Array.from({length: 30}, _ => ({
-  x: rnd(.5),
-  y: rnd(5),
-  z: rnd(.5),
-  r: rnd(.2),
+const data = []
 
-  yv: rnd(0.001)
-}))
 
 const ball = new Balls(data)
 world.add(ball)
 
-ball.color = '#08f'
+ball.color = '#fff'
+
+const lines = new Thing()
+world.add(lines)
+lines.color = 'rgba(255,255,255,0.2)'
+
+d3.json('data/events.json', (resp) => {
+
+  var x = d3.scaleTime()
+    .domain(
+      d3.extent(
+        resp.map( r => r.time)
+      )
+    )
+    .range([1,-1])
+
+
+  var y = d3.scaleLinear()
+    .domain(
+      d3.extent(
+        resp.map( r => r.attendees.length)
+      )
+    )
+    .range([1,-1])
+
+  resp
+    .forEach( event => {
+
+      lines.data.push([
+        $V([x(event.time), y(event.attendees.length), 0, 1]),
+        $V([x(event.time), y(0), 0, 1])
+      ])
+
+      data.push({
+        x: x(event.time),
+        y: y(event.attendees.length||0),
+        z: 0,
+        r: .05
+      })
+
+    }
+  )
+
+
+
+
+})
+
 
 
 pose.on('change', transform => {
@@ -29,16 +73,7 @@ pose.on('change', transform => {
 })
 
 
-var lastT = 0
 loop( t => {
-
-  data.forEach( d => {
-    d.y += (t - lastT) * d.yv
-
-    d.y = wrap(d.y, -5, 5)
-
-  })
-  lastT = t
 
   renderer.render([
     world

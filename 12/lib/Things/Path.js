@@ -1,10 +1,10 @@
 import Thing from './Thing.js'
 
 export default class Path  extends Thing {
+
   constructor () {
 
-    this.data = []
-    this.color = '#fff'
+    super()
 
   }
 
@@ -19,6 +19,7 @@ export default class Path  extends Thing {
       this.last.distanceFrom(p) < 0.1) {
       return false
     }
+
 
     this.data.push([
       p,

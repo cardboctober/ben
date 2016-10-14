@@ -265,14 +265,11 @@ var loop = function (fn) {
 }
 
 
-var rnd = function (n) { return (Math.random()-.5) * n * 2; }
+
 
 
 
 // deal with weird mod behaviour
-var wrap = function (v, min, max) { return (v > max) ? min :
-  (v < min) ? max :
-  v; }
 
 // Because Object is already a thing
 
@@ -449,19 +446,60 @@ var pose = new Pose()
 
 var world = new Thing()
 
-var data = Array.from({length: 30}, function (_) { return ({
-  x: rnd(.5),
-  y: rnd(5),
-  z: rnd(.5),
-  r: rnd(.2),
+var data = []
 
-  yv: rnd(0.001)
-}); })
 
 var ball = new Balls(data)
 world.add(ball)
 
-ball.color = '#08f'
+ball.color = '#fff'
+
+var lines = new Thing()
+world.add(lines)
+lines.color = 'rgba(255,255,255,0.2)'
+
+d3.json('data/events.json', function (resp) {
+
+  var x = d3.scaleTime()
+    .domain(
+      d3.extent(
+        resp.map( function (r) { return r.time; })
+      )
+    )
+    .range([1,-1])
+
+
+  var y = d3.scaleLinear()
+    .domain(
+      d3.extent(
+        resp.map( function (r) { return r.attendees.length; })
+      )
+    )
+    .range([1,-1])
+
+  resp
+    .forEach( function (event) {
+
+      lines.data.push([
+        $V([x(event.time), y(event.attendees.length), 0, 1]),
+        $V([x(event.time), y(0), 0, 1])
+      ])
+
+      data.push({
+        x: x(event.time),
+        y: y(event.attendees.length||0),
+        z: 0,
+        r: .05
+      })
+
+    }
+  )
+
+
+
+
+})
+
 
 
 pose.on('change', function (transform) {
@@ -469,16 +507,7 @@ pose.on('change', function (transform) {
 })
 
 
-var lastT = 0
 loop( function (t) {
-
-  data.forEach( function (d) {
-    d.y += (t - lastT) * d.yv
-
-    d.y = wrap(d.y, -5, 5)
-
-  })
-  lastT = t
 
   renderer.render([
     world
