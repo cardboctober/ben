@@ -14,54 +14,108 @@ const world = new Thing()
 
 const data = []
 
+const nodes = Array.from({length: 30}, _ => ({
+  // x: 0,
+  // y: 0,
+  z: 0,
+  r: 5
+}))
+
+const simulation = d3.forceSimulation(nodes)
+    .force('collide', d3.forceCollide(d => d.r*3))
+    .force('attract', d3.forceManyBody().strength(.1))
+
+
+/*
+  events = [
+    [ {x,y,id} ]
+  ]
+*/
+
+
+
+
+
+
+
+// simulation.stop()
+window.simulation = simulation
+
+const graph = new Balls(nodes)
+// world.add(graph)
+graph.color = 'rgba(255,255,255,0.5)'
+
+const graph2 = new Balls(nodes)
+// world.add(graph2)
+graph2.color = 'rgba(255,255,255,0.5)'
+
+
+
+
+import {scale, rotateY, rotateX, translate} from './matrix.js'
+graph.transform =
+  translate(0,-1,0)
+  .x(
+    rotateX(Math.PI/2)
+    .x(scale(0.01))
+  )
+
+graph2.transform =
+  translate(0,1,0)
+  .x(
+    rotateX(Math.PI/2)
+    .x(scale(0.01))
+  )
+
+
+
+const holder = new Thing()
+world.add(holder)
+
+holder.transform =
+  translate(0,0,0)
+  .x(
+    rotateX(Math.PI/2)
+    .x(scale(0.01))
+  )
 
 const ball = new Balls(data)
-world.add(ball)
-
+// world.add(ball)
 ball.color = '#fff'
 
 const lines = new Thing()
 world.add(lines)
-lines.color = 'rgba(255,255,255,0.2)'
+lines.color = 'rgba(0,0,0,0.8)'
 
-d3.json('data/events.json', (resp) => {
+import layerForce from './process/layer-force.js'
 
-  var x = d3.scaleTime()
-    .domain(
-      d3.extent(
-        resp.map( r => r.time)
+d3.json('data/events.json', (respFull) => {
+  const resp = respFull.slice(0,7)
+
+  const processed = layerForce(
+        resp
+          .map(ev =>
+            ev.attendees
+              .filter(x => x)
+          )
       )
-    )
-    .range([1,-1])
 
 
-  var y = d3.scaleLinear()
-    .domain(
-      d3.extent(
-        resp.map( r => r.attendees.length)
-      )
-    )
-    .range([1,-1])
-
-  resp
-    .forEach( event => {
-
-      lines.data.push([
-        $V([x(event.time), y(event.attendees.length), 0, 1]),
-        $V([x(event.time), y(0), 0, 1])
-      ])
-
-      data.push({
-        x: x(event.time),
-        y: y(event.attendees.length||0),
-        z: 0,
-        r: .05
-      })
-
+  processed.layers.forEach((layer,i) => {
+    // only draw the most recent two layers
+    if(i < 2){
+      const graph = new Balls(layer)
+      world.add(graph)
+      graph.stroke = 'rgba(255,255,255,0.5)'
     }
-  )
+  })
 
-
+  processed.links.forEach( ([a,b]) => {
+    lines.data.push([
+      $V([a.x, a.y, a.z, 1]),
+      $V([b.x, b.y, b.z, 1])
+    ])
+  })
 
 
 })
@@ -71,7 +125,6 @@ d3.json('data/events.json', (resp) => {
 pose.on('change', transform => {
     world.transform = transform
 })
-
 
 loop( t => {
 

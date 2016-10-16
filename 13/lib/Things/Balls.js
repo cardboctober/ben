@@ -17,10 +17,19 @@ export default class Balls extends Thing {
   }
 
   render (ctx, transform) {
+
+    if(this.transform){
+      // console.log("u")
+      transform = transform.multiply(this.transform)
+    }
+
+
     ctx.fillStyle = this.fill || '#000'
+    ctx.strokeStyle = this.stroke || '#000'
     ctx.beginPath()
 
     this.balls
+      // .map(b => {x: b.x/100, y: b.y/100, z:0, r: 0.1})
       .forEach(b => {
         const v = norm(transform.x($V([b.x,b.y,b.z,1])))
         const r = norm(transform.x($V([b.x+b.r,b.y,b.z,1])))

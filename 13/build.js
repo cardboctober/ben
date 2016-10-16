@@ -302,10 +302,19 @@ var Balls = (function (Thing$$1) {
   Balls.prototype.constructor = Balls;
 
   Balls.prototype.render = function render (ctx, transform) {
+
+    if(this.transform){
+      // console.log("u")
+      transform = transform.multiply(this.transform)
+    }
+
+
     ctx.fillStyle = this.fill || '#000'
+    ctx.strokeStyle = this.stroke || '#000'
     ctx.beginPath()
 
     this.balls
+      // .map(b => {x: b.x/100, y: b.y/100, z:0, r: 0.1})
       .forEach(function (b) {
         var v = norm(transform.x($V([b.x,b.y,b.z,1])))
         var r = norm(transform.x($V([b.x+b.r,b.y,b.z,1])))
@@ -320,6 +329,90 @@ var Balls = (function (Thing$$1) {
 
   return Balls;
 }(Thing));
+
+// expensive, but pure-ish,
+// (could be pre-computed)
+
+var layerForce = function (data) {
+
+  var z = d3.scaleLinear()
+    .domain([0,data.length])
+    .range([-1,4])
+
+  var r = d3.scaleLinear()
+    .range([0,1.2])
+
+  var cache = {}
+
+  var layers = data.map( function (attendees, i) {
+
+    var nodes = attendees
+      .map(function (a) {
+        if(cache[a]) {
+          return {
+            _id: a,
+            x: cache[a].x,
+            y: cache[a].y
+          }
+        } else {
+          return {
+            _id: a
+          }
+        }
+      })
+
+    var simulation = d3.forceSimulation(nodes)
+          .force('collide', d3.forceCollide(4))
+          .force('attract', d3.forceManyBody().strength(.1))
+
+    simulation.stop()
+    for (var c = 0; c < 50; c++) {
+      simulation.tick()
+    }
+
+    r.domain(
+      d3.extent(nodes.map(function (n) { return Math.abs(n.x); }))
+    )
+
+    nodes.forEach(function (n) {
+      cache[n._id] = {
+        x: n.x,
+        y: n.y
+      }
+
+    })
+
+    var clean = nodes.map(function (n) { return ({
+      _id: n._id,
+      x: r(n.x),
+      z: r(n.y),
+      y: z(i) + Math.random()*.1,
+      r: r(2)
+    }); })
+
+    return clean;
+
+  })
+
+  var links = []
+
+  for (var l = 0; l < layers.length - 1; l++) {
+    layers[l].forEach( function (a) {
+      layers[l+1].forEach( function (b) {
+        if(a._id === b._id) {
+          links.push([a,b])
+        }
+      })
+    })
+
+  }
+
+  return {
+    layers: layers,
+    links: links
+  }
+
+}
 
 // polyfill browser versions
 
@@ -448,54 +541,107 @@ var world = new Thing()
 
 var data = []
 
+var nodes = Array.from({length: 30}, function (_) { return ({
+  // x: 0,
+  // y: 0,
+  z: 0,
+  r: 5
+}); })
+
+var simulation = d3.forceSimulation(nodes)
+    .force('collide', d3.forceCollide(function (d) { return d.r*3; }))
+    .force('attract', d3.forceManyBody().strength(.1))
+
+
+/*
+  events = [
+    [ {x,y,id} ]
+  ]
+*/
+
+
+
+
+
+
+
+// simulation.stop()
+window.simulation = simulation
+
+var graph = new Balls(nodes)
+// world.add(graph)
+graph.color = 'rgba(255,255,255,0.5)'
+
+var graph2 = new Balls(nodes)
+// world.add(graph2)
+graph2.color = 'rgba(255,255,255,0.5)'
+
+
+
+
+graph.transform =
+  translate(0,-1,0)
+  .x(
+    rotateX(Math.PI/2)
+    .x(scale(0.01))
+  )
+
+graph2.transform =
+  translate(0,1,0)
+  .x(
+    rotateX(Math.PI/2)
+    .x(scale(0.01))
+  )
+
+
+
+var holder = new Thing()
+world.add(holder)
+
+holder.transform =
+  translate(0,0,0)
+  .x(
+    rotateX(Math.PI/2)
+    .x(scale(0.01))
+  )
 
 var ball = new Balls(data)
-world.add(ball)
-
+// world.add(ball)
 ball.color = '#fff'
 
 var lines = new Thing()
 world.add(lines)
-lines.color = 'rgba(255,255,255,0.2)'
+lines.color = 'rgba(0,0,0,0.8)'
 
-d3.json('data/events.json', function (resp) {
+d3.json('data/events.json', function (respFull) {
+  var resp = respFull.slice(0,7)
 
-  var x = d3.scaleTime()
-    .domain(
-      d3.extent(
-        resp.map( function (r) { return r.time; })
+  var processed = layerForce(
+        resp
+          .map(function (ev) { return ev.attendees
+              .filter(function (x) { return x; }); }
+          )
       )
-    )
-    .range([1,-1])
 
 
-  var y = d3.scaleLinear()
-    .domain(
-      d3.extent(
-        resp.map( function (r) { return r.attendees.length; })
-      )
-    )
-    .range([1,-1])
-
-  resp
-    .forEach( function (event) {
-
-      lines.data.push([
-        $V([x(event.time), y(event.attendees.length), 0, 1]),
-        $V([x(event.time), y(0), 0, 1])
-      ])
-
-      data.push({
-        x: x(event.time),
-        y: y(event.attendees.length||0),
-        z: 0,
-        r: .05
-      })
-
+  processed.layers.forEach(function (layer,i) {
+    // only draw the most recent two layers
+    if(i < 2){
+      var graph = new Balls(layer)
+      world.add(graph)
+      graph.stroke = 'rgba(255,255,255,0.5)'
     }
-  )
+  })
 
+  processed.links.forEach( function (ref) {
+    var a = ref[0];
+    var b = ref[1];
 
+    lines.data.push([
+      $V([a.x, a.y, a.z, 1]),
+      $V([b.x, b.y, b.z, 1])
+    ])
+  })
 
 
 })
@@ -505,7 +651,6 @@ d3.json('data/events.json', function (resp) {
 pose.on('change', function (transform) {
     world.transform = transform
 })
-
 
 loop( function (t) {
 
