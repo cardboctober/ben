@@ -8,21 +8,10 @@ export default class Balls extends Thing {
 
   constructor(balls) {
     super()
-
     this.balls = balls
-
-    // this.position  = $V([x,y,z,1])
-    // this.positionR = $V([x+r,y,z,1])
-    // this.r = r
   }
 
   render (ctx, transform) {
-
-    if(this.transform){
-      // console.log("u")
-      transform = transform.multiply(this.transform)
-    }
-
 
     ctx.fillStyle = this.fill || '#000'
     ctx.strokeStyle = this.stroke || '#000'

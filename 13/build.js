@@ -289,12 +289,7 @@ var norm = function (v) { return v.multiply(1/v.e(4)); }
 var Balls = (function (Thing$$1) {
   function Balls(balls) {
     Thing$$1.call(this)
-
     this.balls = balls
-
-    // this.position  = $V([x,y,z,1])
-    // this.positionR = $V([x+r,y,z,1])
-    // this.r = r
   }
 
   if ( Thing$$1 ) Balls.__proto__ = Thing$$1;
@@ -302,12 +297,6 @@ var Balls = (function (Thing$$1) {
   Balls.prototype.constructor = Balls;
 
   Balls.prototype.render = function render (ctx, transform) {
-
-    if(this.transform){
-      // console.log("u")
-      transform = transform.multiply(this.transform)
-    }
-
 
     ctx.fillStyle = this.fill || '#000'
     ctx.strokeStyle = this.stroke || '#000'
@@ -537,84 +526,15 @@ function fullscreen(){
 var renderer = new Renderer()
 var pose = new Pose()
 
+
 var world = new Thing()
-
-var data = []
-
-var nodes = Array.from({length: 30}, function (_) { return ({
-  // x: 0,
-  // y: 0,
-  z: 0,
-  r: 5
-}); })
-
-var simulation = d3.forceSimulation(nodes)
-    .force('collide', d3.forceCollide(function (d) { return d.r*3; }))
-    .force('attract', d3.forceManyBody().strength(.1))
-
-
-/*
-  events = [
-    [ {x,y,id} ]
-  ]
-*/
-
-
-
-
-
-
-
-// simulation.stop()
-window.simulation = simulation
-
-var graph = new Balls(nodes)
-// world.add(graph)
-graph.color = 'rgba(255,255,255,0.5)'
-
-var graph2 = new Balls(nodes)
-// world.add(graph2)
-graph2.color = 'rgba(255,255,255,0.5)'
-
-
-
-
-graph.transform =
-  translate(0,-1,0)
-  .x(
-    rotateX(Math.PI/2)
-    .x(scale(0.01))
-  )
-
-graph2.transform =
-  translate(0,1,0)
-  .x(
-    rotateX(Math.PI/2)
-    .x(scale(0.01))
-  )
-
-
-
-var holder = new Thing()
-world.add(holder)
-
-holder.transform =
-  translate(0,0,0)
-  .x(
-    rotateX(Math.PI/2)
-    .x(scale(0.01))
-  )
-
-var ball = new Balls(data)
-// world.add(ball)
-ball.color = '#fff'
 
 var lines = new Thing()
 world.add(lines)
 lines.color = 'rgba(0,0,0,0.8)'
 
 d3.json('data/events.json', function (respFull) {
-  var resp = respFull.slice(0,7)
+  var resp = respFull.slice(0,8)
 
   var processed = layerForce(
         resp
@@ -623,13 +543,14 @@ d3.json('data/events.json', function (respFull) {
           )
       )
 
-
   processed.layers.forEach(function (layer,i) {
     // only draw the most recent two layers
-    if(i < 2){
+    if(i < 3){
+      var o = 1 - (i*.3)
+
       var graph = new Balls(layer)
+      graph.stroke = 'rgba(255,255,255,'+o+')'
       world.add(graph)
-      graph.stroke = 'rgba(255,255,255,0.5)'
     }
   })
 
