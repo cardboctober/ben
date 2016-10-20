@@ -265,7 +265,7 @@ var loop = function (fn) {
 }
 
 
-
+var rnd = function (n) { return (Math.random()-.5) * n * 2; }
 
 
 
@@ -286,122 +286,80 @@ Thing.prototype.add = function add (thing) {
 var norm = function (v) { return v.multiply(1/v.e(4)); }
 
 
-var Balls = (function (Thing$$1) {
-  function Balls(balls) {
+var Ball = (function (Thing$$1) {
+  function Ball(x,y,z,r) {
     Thing$$1.call(this)
-    this.balls = balls
+    this.position  = $V([x,y,z,1])
+    this.positionR = $V([x+r,y,z,1])
+    this.r = r
   }
 
-  if ( Thing$$1 ) Balls.__proto__ = Thing$$1;
-  Balls.prototype = Object.create( Thing$$1 && Thing$$1.prototype );
-  Balls.prototype.constructor = Balls;
+  if ( Thing$$1 ) Ball.__proto__ = Thing$$1;
+  Ball.prototype = Object.create( Thing$$1 && Thing$$1.prototype );
+  Ball.prototype.constructor = Ball;
 
-  Balls.prototype.render = function render (ctx, transform) {
+  Ball.prototype.render = function render (ctx, transform) {
 
-    ctx.fillStyle = this.fill || '#000'
-    ctx.strokeStyle = this.stroke || '#000'
-    ctx.beginPath()
+    var p = norm(transform.x(this.position))
+    var r = norm(transform.x(this.positionR))
+                .distanceFrom(p)
 
-    this.balls
-      // .map(b => {x: b.x/100, y: b.y/100, z:0, r: 0.1})
-      .forEach(function (b) {
-        var v = norm(transform.x($V([b.x,b.y,b.z,1])))
-        var r = norm(transform.x($V([b.x+b.r,b.y,b.z,1])))
-          .distanceFrom(v)
-
-        ctx.moveTo(v.e(1)+r, v.e(2))
-        ctx.arc(v.e(1), v.e(2), r, 0, Math.PI*2)
-      })
-
-    ctx.stroke()
-  };
-
-  return Balls;
-}(Thing));
-
-// expensive, but pure-ish,
-// (could be pre-computed)
-
-var layerForce = function (data) {
-
-  var z = d3.scaleLinear()
-    .domain([0,data.length])
-    .range([-1,4])
-
-  var r = d3.scaleLinear()
-    .range([0,1.2])
-
-  var cache = {}
-
-  var layers = data.map( function (attendees, i) {
-
-    var nodes = attendees
-      .map(function (a) {
-        if(cache[a]) {
-          return {
-            _id: a,
-            x: cache[a].x,
-            y: cache[a].y
-          }
-        } else {
-          return {
-            _id: a
-          }
-        }
-      })
-
-    var simulation = d3.forceSimulation(nodes)
-          .force('collide', d3.forceCollide(4))
-          .force('attract', d3.forceManyBody().strength(.1))
-
-    simulation.stop()
-    for (var c = 0; c < 50; c++) {
-      simulation.tick()
+    // hack
+    if(r > 300) {
+      return
     }
 
-    r.domain(
-      d3.extent(nodes.map(function (n) { return Math.abs(n.x); }))
+    ctx.fillStyle = this.fill || '#000'
+    ctx.beginPath()
+
+    ctx.arc(p.e(1), p.e(2), r, 0, Math.PI*2)
+
+
+
+
+    ctx.fill()
+  };
+
+  return Ball;
+}(Thing));
+
+// A thing that has been thrown about
+
+var Thrown = (function (Thing$$1) {
+  function Thrown() {
+    Thing$$1.call(this)
+
+    this.p = $V([0,0,0])
+    this.v = $V([0,0,0])
+    this.g = $V([0,6,0])
+  }
+
+  if ( Thing$$1 ) Thrown.__proto__ = Thing$$1;
+  Thrown.prototype = Object.create( Thing$$1 && Thing$$1.prototype );
+  Thrown.prototype.constructor = Thrown;
+
+  Thrown.prototype.time = function time (t) {
+
+    var delta =
+      this.v
+        .add(
+          this.g.x(t)
+        )
+      .x(
+        Math.pow(0.6,t)
+      )
+      .x(t)
+
+    this.transform = translate(
+      this.p.e(1) + delta.e(1),
+      this.p.e(2) + delta.e(2),
+      this.p.e(3) + delta.e(3)
     )
 
-    nodes.forEach(function (n) {
-      cache[n._id] = {
-        x: n.x,
-        y: n.y
-      }
+  };
 
-    })
-
-    var clean = nodes.map(function (n) { return ({
-      _id: n._id,
-      x: r(n.x),
-      z: r(n.y),
-      y: z(i) + Math.random()*.1,
-      r: r(2)
-    }); })
-
-    return clean;
-
-  })
-
-  var links = []
-
-  for (var l = 0; l < layers.length - 1; l++) {
-    layers[l].forEach( function (a) {
-      layers[l+1].forEach( function (b) {
-        if(a._id === b._id) {
-          links.push([a,b])
-        }
-      })
-    })
-
-  }
-
-  return {
-    layers: layers,
-    links: links
-  }
-
-}
+  return Thrown;
+}(Thing));
 
 // polyfill browser versions
 
@@ -525,47 +483,25 @@ function fullscreen(){
 
 var renderer = new Renderer()
 var pose = new Pose()
-
-
 var world = new Thing()
 
-var lines = new Thing()
-world.add(lines)
-lines.color = 'rgba(0,0,0,0.8)'
+var holders = []
 
-d3.json('data/events.json', function (respFull) {
-  var resp = respFull.slice(0,8)
+for (var i = 0; i < 10; i++) {
 
-  var processed = layerForce(
-        resp
-          .map(function (ev) { return ev.attendees
-              .filter(function (x) { return x; }); }
-          )
-      )
+  var ball = new Ball(0,0,0,0.2)
+  ball.fill = 'rgba(0,150,255,0.7)'
 
-  processed.layers.forEach(function (layer,i) {
-    // only draw the most recent two layers
-    if(i < 3){
-      var o = 1 - (i*.3)
+  var holder = new Thrown()
 
-      var graph = new Balls(layer)
-      graph.stroke = 'rgba(255,255,255,'+o+')'
-      world.add(graph)
-    }
-  })
+  holder.add(ball)
+  world.add(holder)
 
-  processed.links.forEach( function (ref) {
-    var a = ref[0];
-    var b = ref[1];
+  holder.p = $V([0,2,0])
+  holder.v = $V([rnd(8),rnd(8)-12,rnd(8)])
 
-    lines.data.push([
-      $V([a.x, a.y, a.z, 1]),
-      $V([b.x, b.y, b.z, 1])
-    ])
-  })
-
-
-})
+  holders.push(holder)
+}
 
 
 
@@ -573,11 +509,16 @@ pose.on('change', function (transform) {
     world.transform = transform
 })
 
-loop( function (t) {
+
+loop( function (t2) {
 
   renderer.render([
     world
   ])
+
+  var t = (t2 % 2500) / 1000
+
+  holders.forEach(function (h) { return h.time(t); })
 
 })
 
