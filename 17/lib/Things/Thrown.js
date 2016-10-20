@@ -12,6 +12,7 @@ export default class Thrown extends Thing {
     this.p = $V([0,0,0])
     this.v = $V([0,0,0])
     this.g = $V([0,6,0])
+    
   }
 
   time (t) {

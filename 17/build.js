@@ -332,6 +332,7 @@ var Thrown = (function (Thing$$1) {
     this.p = $V([0,0,0])
     this.v = $V([0,0,0])
     this.g = $V([0,6,0])
+    
   }
 
   if ( Thing$$1 ) Thrown.__proto__ = Thing$$1;
@@ -489,8 +490,8 @@ var holders = []
 
 for (var i = 0; i < 10; i++) {
 
-  var ball = new Ball(0,0,0,0.2)
-  ball.fill = 'rgba(0,150,255,0.7)'
+  var ball = new Ball(0,0,0,0.1)
+  ball.fill = 'rgba(234,150,0,0.7)'
 
   var holder = new Thrown()
 

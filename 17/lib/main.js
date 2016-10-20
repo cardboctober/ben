@@ -13,8 +13,8 @@ const holders = []
 
 for (var i = 0; i < 10; i++) {
 
-  const ball = new Ball(0,0,0,0.2)
-  ball.fill = 'rgba(0,150,255,0.7)'
+  const ball = new Ball(0,0,0,0.1)
+  ball.fill = 'rgba(234,150,0,0.7)'
 
   const holder = new Thrown()
 
