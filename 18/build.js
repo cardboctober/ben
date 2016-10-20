@@ -326,13 +326,13 @@ var Ball = (function (Thing$$1) {
 // A thing that has been thrown about
 
 var Thrown = (function (Thing$$1) {
-  function Thrown() {
+  function Thrown(data) {
     Thing$$1.call(this)
 
-    this.p = $V([0,0,0])
-    this.v = $V([0,0,0])
-    this.g = $V([0,6,0])
-    
+    this.data = data
+
+    this.g = 6
+
   }
 
   if ( Thing$$1 ) Thrown.__proto__ = Thing$$1;
@@ -341,20 +341,18 @@ var Thrown = (function (Thing$$1) {
 
   Thrown.prototype.time = function time (t) {
 
-    var delta =
-      this.v
-        .add(
-          this.g.x(t)
-        )
-      .x(
-        Math.pow(0.6,t)
-      )
-      .x(t)
+    var d = this.data
+
+    var delta = {
+      x: (d.v.x) * Math.pow(0.6,t) * t,
+      y: (d.v.y + (this.g * t)) * Math.pow(0.6,t) * t,
+      z: (d.v.z) * Math.pow(0.6,t) * t
+    }
 
     this.transform = translate(
-      this.p.e(1) + delta.e(1),
-      this.p.e(2) + delta.e(2),
-      this.p.e(3) + delta.e(3)
+      d.p.x + delta.x,
+      d.p.y + delta.y,
+      d.p.z + delta.z
     )
 
   };
@@ -493,13 +491,19 @@ for (var i = 0; i < 10; i++) {
   var ball = new Ball(0,0,0,0.1)
   ball.fill = 'rgba(234,150,0,0.7)'
 
-  var holder = new Thrown()
+  var holder = new Thrown(
+    {
+      // p: {x:rnd(.1),y:rnd(.1),z:rnd(.1)},
+      p: {x:0,y:0,z:0},
+      v: {x:rnd(8),y:rnd(8)-8,z:rnd(8)}
+    }
+  )
 
   holder.add(ball)
   world.add(holder)
-
-  holder.p = $V([0,2,0])
-  holder.v = $V([rnd(8),rnd(8)-12,rnd(8)])
+  //
+  // holder.p = $V([rnd(1),rnd(1),rnd(1)])
+  // holder.v = $V([rnd(8),rnd(8)-8,rnd(8)])
 
   holders.push(holder)
 }

@@ -6,31 +6,29 @@ import {translate} from '../matrix.js'
 
 export default class Thrown extends Thing {
 
-  constructor() {
+  constructor(data) {
     super()
 
-    this.p = $V([0,0,0])
-    this.v = $V([0,0,0])
-    this.g = $V([0,6,0])
-    
+    this.data = data
+
+    this.g = 6
+
   }
 
   time (t) {
 
-    const delta =
-      this.v
-        .add(
-          this.g.x(t)
-        )
-      .x(
-        Math.pow(0.6,t)
-      )
-      .x(t)
+    const d = this.data
+
+    const delta = {
+      x: (d.v.x) * Math.pow(0.6,t) * t,
+      y: (d.v.y + (this.g * t)) * Math.pow(0.6,t) * t,
+      z: (d.v.z) * Math.pow(0.6,t) * t
+    }
 
     this.transform = translate(
-      this.p.e(1) + delta.e(1),
-      this.p.e(2) + delta.e(2),
-      this.p.e(3) + delta.e(3)
+      d.p.x + delta.x,
+      d.p.y + delta.y,
+      d.p.z + delta.z
     )
 
   }

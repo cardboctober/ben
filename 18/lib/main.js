@@ -16,13 +16,19 @@ for (var i = 0; i < 10; i++) {
   const ball = new Ball(0,0,0,0.1)
   ball.fill = 'rgba(234,150,0,0.7)'
 
-  const holder = new Thrown()
+  const holder = new Thrown(
+    {
+      // p: {x:rnd(.1),y:rnd(.1),z:rnd(.1)},
+      p: {x:0,y:0,z:0},
+      v: {x:rnd(8),y:rnd(8)-8,z:rnd(8)}
+    }
+  )
 
   holder.add(ball)
   world.add(holder)
-
-  holder.p = $V([0,2,0])
-  holder.v = $V([rnd(8),rnd(8)-12,rnd(8)])
+  //
+  // holder.p = $V([rnd(1),rnd(1),rnd(1)])
+  // holder.v = $V([rnd(8),rnd(8)-8,rnd(8)])
 
   holders.push(holder)
 }
