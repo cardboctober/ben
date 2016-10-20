@@ -17,18 +17,20 @@ export default class Thrown extends Thing {
 
   time (t) {
 
+    const damp = Math.pow(0.6,t) * t
+
     const d = this.data
 
     const delta = {
-      x: (d.v.x) * Math.pow(0.6,t) * t,
-      y: (d.v.y + (this.g * t)) * Math.pow(0.6,t) * t,
-      z: (d.v.z) * Math.pow(0.6,t) * t
+      x: d.p.x + d.v.x * damp,
+      y: d.p.y + (d.v.y + this.g * t) * damp,
+      z: d.p.z + d.v.z * damp
     }
 
     this.transform = translate(
-      d.p.x + delta.x,
-      d.p.y + delta.y,
-      d.p.z + delta.z
+      delta.x,
+      delta.y,
+      delta.z
     )
 
   }

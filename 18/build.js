@@ -341,18 +341,20 @@ var Thrown = (function (Thing$$1) {
 
   Thrown.prototype.time = function time (t) {
 
+    var damp = Math.pow(0.6,t) * t
+
     var d = this.data
 
     var delta = {
-      x: (d.v.x) * Math.pow(0.6,t) * t,
-      y: (d.v.y + (this.g * t)) * Math.pow(0.6,t) * t,
-      z: (d.v.z) * Math.pow(0.6,t) * t
+      x: d.p.x + d.v.x * damp,
+      y: d.p.y + (d.v.y + this.g * t) * damp,
+      z: d.p.z + d.v.z * damp
     }
 
     this.transform = translate(
-      d.p.x + delta.x,
-      d.p.y + delta.y,
-      d.p.z + delta.z
+      delta.x,
+      delta.y,
+      delta.z
     )
 
   };
@@ -493,17 +495,13 @@ for (var i = 0; i < 10; i++) {
 
   var holder = new Thrown(
     {
-      // p: {x:rnd(.1),y:rnd(.1),z:rnd(.1)},
-      p: {x:0,y:0,z:0},
+      p: {x:rnd(2),y:rnd(2),z:rnd(2)},
       v: {x:rnd(8),y:rnd(8)-8,z:rnd(8)}
     }
   )
 
   holder.add(ball)
   world.add(holder)
-  //
-  // holder.p = $V([rnd(1),rnd(1),rnd(1)])
-  // holder.v = $V([rnd(8),rnd(8)-8,rnd(8)])
 
   holders.push(holder)
 }
