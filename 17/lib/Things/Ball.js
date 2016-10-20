@@ -14,14 +14,23 @@ export default class Ball extends Thing {
   }
 
   render (ctx, transform) {
-    ctx.fillStyle = this.fill || '#000'
-    ctx.beginPath()
 
     const p = norm(transform.x(this.position))
     const r = norm(transform.x(this.positionR))
                 .distanceFrom(p)
 
+    // hack
+    if(r > 300) {
+      return
+    }
+
+    ctx.fillStyle = this.fill || '#000'
+    ctx.beginPath()
+
     ctx.arc(p.e(1), p.e(2), r, 0, Math.PI*2)
+
+
+
 
     ctx.fill()
   }
