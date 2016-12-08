@@ -515,10 +515,20 @@ var available = (function ( doc ) {
 function fullscreen(){
 
   if(available) {
-    document.addEventListener('click', function (e) {
-      if(!document.fullscreenEnabled)
-        { document.body.requestFullscreen() }
-    }, false)
+    if(location.search == '?fs') {
+      document.addEventListener('click', function (e) {
+        if(!document.fullscreenEnabled)
+          { document.body.requestFullscreen() }
+      }, false)
+    } else {
+      
+      var fs = document.createElement('a')
+      fs.href = '?fs'
+      fs.innerText = '⬆︎'
+      fs.setAttribute('style', 'position: absolute; bottom: 1em; z-index: 100; display: block; height: 2em; width: 2em; left: 50%; margin-left: -.75em; color: rgba(2, 2, 2, 0.54); font-weight: 100; text-decoration: none; background: rgba(8, 8, 8, 0.18); text-align: center; line-height: 2em; font-family: sans-serif; border-radius: 50%;')
+      document.body.appendChild(fs)
+
+    }
   }
 
 }

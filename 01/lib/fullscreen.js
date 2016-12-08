@@ -7,8 +7,7 @@ const available = (function ( doc ) {
   /*global Element */
 
   var pollute = true,
-    api,
-    vendor,
+    api, vendor,
     apis = {
       // http://dvcs.w3.org/hg/fullscreen/raw-file/tip/Overview.html
       w3: {
@@ -111,23 +110,21 @@ const available = (function ( doc ) {
 export default function fullscreen(){
 
   if(available) {
+    if(location.search == '?fs') {
+      document.addEventListener('click', e => {
+        if(!document.fullscreenEnabled)
+          document.body.requestFullscreen()
+      }, false)
+    } else {
+      
+      var fs = document.createElement('a')
+      fs.href = '?fs'
+      fs.innerText = '⬆︎'
+      fs.setAttribute('style', 'position: absolute; bottom: 1em; z-index: 100; display: block; height: 2em; width: 2em; left: 50%; margin-left: -.75em; color: rgba(2, 2, 2, 0.54); font-weight: 100; text-decoration: none; background: rgba(8, 8, 8, 0.18); text-align: center; line-height: 2em; font-family: sans-serif; border-radius: 50%;')
+      document.body.appendChild(fs)
 
-    const button = document.createElement('button')
-    
-    button.innerText = '↗︎'
-    button.setAttribute('style', 'position: absolute; bottom:0; left:0; font-size: 10vmin; height: 2em; width: 2em; border: none; background: rgba(255,255,255,0.15); color: #fff; border-radius: 0 10% 0 0; box-shadow: rgba(1,1,1,0.1) 0 0 8px; font-weight: 800;')
-
-    document.body.appendChild(button)
-
-    document.addEventListener('fullscreenchange', e => {
-
-      button.style.display = document.fullscreenEnabled ? 'none' : 'block'
-    })
-
-    button.addEventListener('click', e => {
-      document.body.requestFullscreen()
-    }, false)
-
+    }
   }
 
 }
+

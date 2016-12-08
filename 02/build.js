@@ -1,357 +1,369 @@
 (function () {
-  'use strict';
+'use strict';
 
-  // wrappers around sylvester with homogenous coord stuff
+var rnd = function (i) { return (Math.random()-.5) * 5; }
 
-  // hacky m3 -> m4
-  var toHom = function (m) { return $M(
-      m.elements
-        .map(function (r) { return r.concat([0]); })
-        .concat([[0,0,0,1]])
-    ); }
+// wrappers around sylvester with homogenous coord stuff
+
+// hacky m3 -> m4
+var toHom = function (m) { return $M(
+    m.elements
+      .map(function (r) { return r.concat([0]); })
+      .concat([[0,0,0,1]])
+  ); }
 
 
-  var translate = function (x,y,z) { return $M([
-      [1,0,0,x],
-      [0,1,0,y],
-      [0,0,1,z],
-      [0,0,0,1]
-    ]); }
+var translate = function (x,y,z) { return $M([
+    [1,0,0,x],
+    [0,1,0,y],
+    [0,0,1,z],
+    [0,0,0,1]
+  ]); }
 
-  var scale = function (s) { return Matrix.Diagonal([s,s,s,1]); }
+var scale = function (s) { return Matrix.Diagonal([s,s,s,1]); }
 
-  var rotateX = function (a) { return toHom(Matrix.RotationX(a)); }
+var rotateX = function (a) { return toHom(Matrix.RotationX(a)); }
 
-  var rotateY = function (a) { return toHom(Matrix.RotationY(a)); }
+var rotateY = function (a) { return toHom(Matrix.RotationY(a)); }
 
-  var perspective = function (p) { return $M([
-      [1,0,0,0],
-      [0,1,0,0],
-      [0,0,1,0],
-      [0,0,p,1-p]
-    ]); }
+var perspective = function (p) { return $M([
+    [1,0,0,0],
+    [0,1,0,0],
+    [0,0,1,0],
+    [0,0,p,1-p]
+  ]); }
 
-  var Renderer = function Renderer() {
+var Renderer = function Renderer() {
+  var this$1 = this;
+
+
+  this.camera = this.orientation = Matrix.I(4)
+
+  this.canvas = document.createElement('canvas')
+  document.body.appendChild(this.canvas)
+
+  this.fit()
+  window.addEventListener('resize',
+    function (e) { return this$1.fit(); }, false)
+
+  window.addEventListener('deviceorientation',
+    function (e) { return this$1.orient(e); }, false)
+
+
+
+
+};
+
+Renderer.prototype.fit = function fit () {
+
+  var ratio = window.devicePixelRatio || 1
+
+  this.canvas.width = this.w = window.innerWidth * ratio
+  this.canvas.height = this.h = window.innerHeight * ratio
+
+  if(ratio != 1) {
+    this.canvas.style.width = window.innerWidth + 'px'
+    this.canvas.style.height = window.innerHeight + 'px'
+  }
+
+  this.ctx = this.canvas.getContext('2d')
+  this.ctx.lineWidth = 3
+  this.ctx.lineCap = 'round'
+  this.ctx.strokeStyle = '#f08'
+
+  var s = Math.min(this.w, this.h) / 9
+
+  this.left = translate(
+    this.w/4,
+    this.h/2,
+    0
+  )
+  .multiply(scale(s))
+  .multiply(perspective(0.1))
+  .multiply(rotateY(-0.05))
+
+  this.right = translate(
+    this.w*.75,
+    this.h/2,
+    0
+  )
+  .multiply(scale(s))
+  .multiply(perspective(0.1))
+  .multiply(rotateY(0.05))
+
+
+  this.dirty = true
+
+};
+
+Renderer.prototype.orient = function orient (e) {
+
+  // There is definitely a better way of doing this, but this'll do for now
+
+  var up = ((e.gamma + 180) % 180) - 90
+
+  var off = 0
+  if(e.gamma > 0) {
+    off = Math.PI
+  }
+
+  this.orientation =
+    rotateX(up/50)
+    .multiply(
+      rotateY(
+        (((-e.alpha/360) + 1) * Math.PI*2) + off
+      )
+    )
+
+  this.dirty = true
+
+};
+
+Renderer.prototype.render = function render (obj) {
     var this$1 = this;
 
+  var ctx = this.ctx
+  ctx.clearRect(0,0,this.w, this.h)
 
-    this.camera = this.orientation = Matrix.I(4)
+  ;[this.left, this.right].forEach(function (camera) {
+    var t =
+      camera
+      .multiply(this$1.orientation)
 
-    this.canvas = document.createElement('canvas')
-    document.body.appendChild(this.canvas)
+    ctx.beginPath()
+    for (var i = 0; i < obj.data.length; i++) {
+      var l = obj.data[i]
+      var a = t.x(l[0])
+      var b = t.x(l[1])
 
-    this.fit()
-    window.addEventListener('resize',
-      function (e) { return this$1.fit(); }, false)
+      a = a.multiply(1/a.e(4))
+      b = b.multiply(1/b.e(4))
 
-    window.addEventListener('deviceorientation',
-      function (e) { return this$1.orient(e); }, false)
-
-
-
-
-  };
-
-  Renderer.prototype.fit = function fit () {
-
-    var ratio = window.devicePixelRatio || 1
-
-    this.canvas.width = this.w = window.innerWidth * ratio
-    this.canvas.height = this.h = window.innerHeight * ratio
-
-    if(ratio != 1) {
-      this.canvas.style.width = window.innerWidth + 'px'
-      this.canvas.style.height = window.innerHeight + 'px'
-    }
-
-    this.ctx = this.canvas.getContext('2d')
-    this.ctx.lineWidth = 3
-    this.ctx.lineCap = 'round'
-    this.ctx.strokeStyle = '#f08'
-
-    var s = Math.min(this.w, this.h) / 9
-
-    this.left = translate(
-      this.w/4,
-      this.h/2,
-      0
-    )
-    .multiply(scale(s))
-    .multiply(perspective(0.1))
-    .multiply(rotateY(-0.05))
-
-    this.right = translate(
-      this.w*.75,
-      this.h/2,
-      0
-    )
-    .multiply(scale(s))
-    .multiply(perspective(0.1))
-    .multiply(rotateY(0.05))
+      var x = a.e(1)
+      var y = a.e(2)
+      var r = a.distanceFrom(b)
 
 
-    this.dirty = true
+      // crosshatch in view coords
 
-  };
-
-  Renderer.prototype.orient = function orient (e) {
-
-    // There is definitely a better way of doing this, but this'll do for now
-
-    var up = ((e.gamma + 180) % 180) - 90
-
-    var off = 0
-    if(e.gamma > 0) {
-      off = Math.PI
-    }
-
-    this.orientation =
-      rotateX(up/50)
-      .multiply(
-        rotateY(
-          (((-e.alpha/360) + 1) * Math.PI*2) + off
-        )
+      ctx.moveTo(
+        x,y-r
       )
 
-    this.dirty = true
+      ctx.lineTo(
+        x,y + r
+      )
 
-  };
+      ctx.moveTo(
+        x-r,y
+      )
 
-  Renderer.prototype.render = function render (obj) {
-      var this$1 = this;
+      ctx.lineTo(
+        x+r,y
+      )
 
-    var ctx = this.ctx
-    ctx.clearRect(0,0,this.w, this.h)
+      ctx.moveTo(
+        x,y
+      )
 
-    ;[this.left, this.right].forEach(function (camera) {
-      var t =
-        camera
-        .multiply(this$1.orientation)
-
-      ctx.beginPath()
-      for (var i = 0; i < obj.data.length; i++) {
-        var l = obj.data[i]
-        var a = t.x(l[0])
-        var b = t.x(l[1])
-
-        a = a.multiply(1/a.e(4))
-        b = b.multiply(1/b.e(4))
-
-        var x = a.e(1)
-        var y = a.e(2)
-        var r = a.distanceFrom(b)
-
-
-        // crosshatch in view coords
-
-        ctx.moveTo(
-          x,y-r
-        )
-
-        ctx.lineTo(
-          x,y + r
-        )
-
-        ctx.moveTo(
-          x-r,y
-        )
-
-        ctx.lineTo(
-          x+r,y
-        )
-
-        ctx.moveTo(
-          x,y
-        )
-
-      }
-      ctx.stroke()
-
-    })
-
-    this.dirty = false
-  };
-
-  var each = function (start, to, by, fn) {
-    for(var i = start; i <= to; i += by) {
-      fn(i)
     }
+    ctx.stroke()
+
+  })
+
+  this.dirty = false
+};
+
+var each = function (start, to, by, fn) {
+  for(var i = start; i <= to; i += by) {
+    fn(i)
   }
+}
 
-  function grid (off) {
+function grid (off) {
 
-    var data = []
+  var data = []
 
-    var a = -1.5
-    var b = 1.5
-    var ab = b - a
+  var a = -1.5
+  var b = 1.5
+  var ab = b - a
 
-    var s = 1.5
+  var s = 1.5
 
-    each(-s, s, 1, function (x) {
-      x = (((x + off + s)) % s*2) - s
+  each(-s, s, 1, function (x) {
+    x = (((x + off + s)) % s*2) - s
 
-      each(-1,1,1, function (y) {
-        each(-1,1,1, function (z) {
+    each(-1,1,1, function (y) {
+      each(-1,1,1, function (z) {
 
-          var d = 0.05
-            * Math.cos(
-              (x / s)
-              * (Math.PI/2)
-            )
+        var d = 0.05
+          * Math.cos(
+            (x / s)
+            * (Math.PI/2)
+          )
 
-          data.push([
-            $V([x-d,y,z,1]),
-            $V([x+d,y,z,1])
-          ])
+        data.push([
+          $V([x-d,y,z,1]),
+          $V([x+d,y,z,1])
+        ])
 
 
-        })
       })
     })
+  })
 
 
-    return {data:data}
+  return {data:data}
 
-  }
+}
 
-  var loop = function (fn) {
-    var wrap = function (t) {
-      requestAnimationFrame(wrap)
-      fn(t)
-    }
-
+var loop = function (fn) {
+  var wrap = function (t) {
     requestAnimationFrame(wrap)
+    fn(t)
   }
 
-  // polyfill browser versions
+  requestAnimationFrame(wrap)
+}
 
-  var available = (function ( doc ) {
-    // Use JavaScript script mode
-    "use strict";
+// polyfill browser versions
 
-    /*global Element */
+var available = (function ( doc ) {
+  // Use JavaScript script mode
+  "use strict";
 
-    var pollute = true,
-      api, vendor,
-      apis = {
-        // http://dvcs.w3.org/hg/fullscreen/raw-file/tip/Overview.html
-        w3: {
-          enabled: "fullscreenEnabled",
-          element: "fullscreenElement",
-          request: "requestFullscreen",
-          exit:    "exitFullscreen",
-          events: {
-            change: "fullscreenchange",
-            error:  "fullscreenerror"
-          }
-        },
-        webkit: {
-          enabled: "webkitIsFullScreen",
-          element: "webkitCurrentFullScreenElement",
-          request: "webkitRequestFullScreen",
-          exit:    "webkitCancelFullScreen",
-          events: {
-            change: "webkitfullscreenchange",
-            error:  "webkitfullscreenerror"
-          }
-        },
-        moz: {
-          enabled: "mozFullScreenEnabled",
-          element: "mozFullScreenElement",
-          request: "mozRequestFullScreen",
-          exit:    "mozCancelFullScreen",
-          events: {
-            change: "mozfullscreenchange",
-            error:  "mozfullscreenerror"
-          }
-        },
-        ms: {
-          enabled: "msFullscreenEnabled",
-          element: "msFullscreenElement",
-          request: "msRequestFullscreen",
-          exit:    "msExitFullscreen",
-          events: {
-            change: "MSFullscreenChange",
-            error:  "MSFullscreenError"
-          }
+  /*global Element */
+
+  var pollute = true,
+    api, vendor,
+    apis = {
+      // http://dvcs.w3.org/hg/fullscreen/raw-file/tip/Overview.html
+      w3: {
+        enabled: "fullscreenEnabled",
+        element: "fullscreenElement",
+        request: "requestFullscreen",
+        exit:    "exitFullscreen",
+        events: {
+          change: "fullscreenchange",
+          error:  "fullscreenerror"
         }
       },
-      w3 = apis.w3;
-
-    // Loop through each vendor's specific API
-    for (vendor in apis) {
-      // Check if document has the "enabled" property
-      if (apis[vendor].enabled in doc) {
-        // It seems this browser support the fullscreen API
-        api = apis[vendor];
-        break;
+      webkit: {
+        enabled: "webkitIsFullScreen",
+        element: "webkitCurrentFullScreenElement",
+        request: "webkitRequestFullScreen",
+        exit:    "webkitCancelFullScreen",
+        events: {
+          change: "webkitfullscreenchange",
+          error:  "webkitfullscreenerror"
+        }
+      },
+      moz: {
+        enabled: "mozFullScreenEnabled",
+        element: "mozFullScreenElement",
+        request: "mozRequestFullScreen",
+        exit:    "mozCancelFullScreen",
+        events: {
+          change: "mozfullscreenchange",
+          error:  "mozfullscreenerror"
+        }
+      },
+      ms: {
+        enabled: "msFullscreenEnabled",
+        element: "msFullscreenElement",
+        request: "msRequestFullscreen",
+        exit:    "msExitFullscreen",
+        events: {
+          change: "MSFullscreenChange",
+          error:  "MSFullscreenError"
+        }
       }
+    },
+    w3 = apis.w3;
+
+  // Loop through each vendor's specific API
+  for (vendor in apis) {
+    // Check if document has the "enabled" property
+    if (apis[vendor].enabled in doc) {
+      // It seems this browser support the fullscreen API
+      api = apis[vendor];
+      break;
     }
+  }
 
-    function dispatch( type, target ) {
-      var event = doc.createEvent( "Event" );
+  function dispatch( type, target ) {
+    var event = doc.createEvent( "Event" );
 
-      event.initEvent( type, true, false );
-      target.dispatchEvent( event );
-    } // end of dispatch()
+    event.initEvent( type, true, false );
+    target.dispatchEvent( event );
+  } // end of dispatch()
 
-    function handleChange( e ) {
-      // Recopy the enabled and element values
-      doc[w3.enabled] = doc[api.enabled];
-      doc[w3.element] = doc[api.element];
+  function handleChange( e ) {
+    // Recopy the enabled and element values
+    doc[w3.enabled] = doc[api.enabled];
+    doc[w3.element] = doc[api.element];
 
-      dispatch( w3.events.change, e.target );
-    } // end of handleChange()
+    dispatch( w3.events.change, e.target );
+  } // end of handleChange()
 
-    function handleError( e ) {
-      dispatch( w3.events.error, e.target );
-    } // end of handleError()
+  function handleError( e ) {
+    dispatch( w3.events.error, e.target );
+  } // end of handleError()
 
-    // Pollute only if the API doesn't already exists
-    if (pollute && !(w3.enabled in doc) && api) {
-      // Add listeners for fullscreen events
-      doc.addEventListener( api.events.change, handleChange, false );
-      doc.addEventListener( api.events.error,  handleError,  false );
+  // Pollute only if the API doesn't already exists
+  if (pollute && !(w3.enabled in doc) && api) {
+    // Add listeners for fullscreen events
+    doc.addEventListener( api.events.change, handleChange, false );
+    doc.addEventListener( api.events.error,  handleError,  false );
 
-      // Copy the default value
-      doc[w3.enabled] = doc[api.enabled];
-      doc[w3.element] = doc[api.element];
+    // Copy the default value
+    doc[w3.enabled] = doc[api.enabled];
+    doc[w3.element] = doc[api.element];
 
-      // Match the reference for exitFullscreen
-      doc[w3.exit] = doc[api.exit];
+    // Match the reference for exitFullscreen
+    doc[w3.exit] = doc[api.exit];
 
-      // Add the request method to the Element's prototype
-      Element.prototype[w3.request] = function () {
-        return this[api.request].apply( this, arguments );
-      };
-    }
+    // Add the request method to the Element's prototype
+    Element.prototype[w3.request] = function () {
+      return this[api.request].apply( this, arguments );
+    };
+  }
 
-    // Return the API found (or undefined if the Fullscreen API is unavailable)
-    return api;
+  // Return the API found (or undefined if the Fullscreen API is unavailable)
+  return api;
 
-  }( document ));
+}( document ));
 
 
-  function fullscreen(){
+function fullscreen(){
 
-    if(available) {
+  if(available) {
+    if(location.search == '?fs') {
       document.addEventListener('click', function (e) {
         if(!document.fullscreenEnabled)
           { document.body.requestFullscreen() }
       }, false)
-    }
+    } else {
+      
+      var fs = document.createElement('a')
+      fs.href = '?fs'
+      fs.innerText = '⬆︎'
+      fs.setAttribute('style', 'position: absolute; bottom: 1em; z-index: 100; display: block; height: 2em; width: 2em; left: 50%; margin-left: -.75em; color: rgba(2, 2, 2, 0.54); font-weight: 100; text-decoration: none; background: rgba(8, 8, 8, 0.18); text-align: center; line-height: 2em; font-family: sans-serif; border-radius: 50%;')
+      document.body.appendChild(fs)
 
+    }
   }
 
-  var renderer = new Renderer()
+}
 
-  loop( function (t) {
-    renderer.render(
-      grid(t/3000)
-    )
-  })
+var renderer = new Renderer()
 
-  fullscreen()
+loop( function (t) {
+  renderer.render(
+    grid(t/3000)
+  )
+})
+
+fullscreen()
 
 }());
